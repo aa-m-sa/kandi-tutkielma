@@ -1,0 +1,16 @@
+*~
+*.log
+*.aux
+*.toc
+*.out
+Tutkielma/*.pdf
+*.swp
+revision.tex
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.run.xml
+Matlab/testdata-shared/testdatapics
+Matlab/testdata-images/*.png

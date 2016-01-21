@@ -1,0 +1,137 @@
+% .sty kandintutkielmaa varten
+% XeLaTeX for utf-8 support
+
+\ProvidesPackage{kandi.sty}
+
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{amsthm}
+
+\usepackage{fontspec}
+%\setmainfont[Ligatures=TeX]{Latin Modern Roman}
+\setmainfont[Ligatures=TeX]{TeX Gyre Pagella}
+
+\usepackage{unicode-math}
+\setmathfont[math-style=TeX]{Asana Math}
+%\setmathfont[math-style=TeX]{TeX Gyre Pagella Math}
+
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{microtype}
+
+% support suomelle
+\usepackage{polyglossia}
+\setdefaultlanguage{finnish}
+
+\usepackage{listings}          % Koodilistaukset
+
+\lstset{                       % Koodilistausten säätöä
+    extendedchars=true,
+    inputencoding=utf8,
+    showstringspaces=false,
+    basicstyle=\footnotesize\ttfamily
+}
+
+\usepackage{algorithm2e}        % algolistaukset
+
+% Suomenkielisen tyylin mukainen muotoilu
+
+% better ams custom theorem bugfix
+%\begingroup
+%    \makeatletter
+%    \@for\theoremstyle:=definition,remark,plain\do{%
+%        \expandafter\g@addto@macro\csname th@\theoremstyle\endcsname{%
+%            \addtolength\thm@preskip\parskip
+%            }%
+%        }
+%\endgroup
+
+
+\usepackage{placeins}   % provides \FloatBarrier
+
+\usepackage{subcaption}
+
+%\usepackage{parskip}
+\usepackage[margin=1.4in, a4paper]{geometry}
+
+% Bugfixes
+
+%%% \left( etc välistys bugfix
+%%% http://tex.stackexchange.com/questions/2607/spacing-around-left-and-right
+%\let\originalleft\left
+%\let\originalright\right
+%\renewcommand{\left}{\mathopen{}\mathclose\bgroup\originalleft}
+%\renewcommand{\right}{\aftergroup\egroup\originalright}
+
+
+% Oma säätöä
+
+% Teoreemat, jne.
+\theoremstyle{definition}
+\newtheorem{maar}{Määritelmä}[chapter]
+
+\theoremstyle{definition}
+\newtheorem{esim}{Esimerkki}[chapter]
+
+\theoremstyle{plain}
+\newtheorem{lause}{Lause}[chapter]
+
+\theoremstyle{plain}
+\newtheorem{lemma}{Lemma}[chapter]
+
+\theoremstyle{remark}
+\newtheorem{huom}{Huomautus}[chapter]
+
+\theoremstyle{remark}
+\newtheorem*{merk}{Merkintä}
+
+% kandia varten
+\theoremstyle{plain}
+\newtheorem*{todo}{Todo}
+
+\theoremstyle{plain}
+\newtheorem{kysymys}{Kysymys}
+
+\theoremstyle{remark}
+\newtheorem*{pohdi}{Pohdi}
+
+% vektorit
+\newcommand{\vect}[1]{\ensuremath{\mathbf{#1}}}
+
+% tietojenkäsittely
+\newcommand{\BigO}[1]{\ensuremath{\mathcal{O}\left(#1\right)}}
+
+
+% symbolit
+% tavalliset
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Natural}{\mathbb{N}}
+\newcommand{\Integer}{\mathbb{Z}}
+\newcommand{\Complex}{\mathbb{C}}
+\newcommand{\euler}{e}
+\newcommand{\iu}{i}
+
+\newcommand{\df}[1]{\, \mathrm{d} #1}
+
+% joukko-oppi
+\DeclarePairedDelimiterX\Set[2]{\lbrace}{\rbrace}{ #1 \,\delimsize|\, #2 }
+\DeclarePairedDelimiterX\PlainSet[1]{\lbrace}{\rbrace}{ #1 }
+
+\DeclareMathOperator{\syt}{syt}
+
+% tilastolliset
+\newcommand*\mean[1]{\overline{#1}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\E}{\mathrm{E}}
+
+% matriisialgebra
+\newcommand{\rank}{\mathrm{rank}}
+
+%\providecommand{\abs}[1]{\lvert #1 \rvert}
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+\providecommand{\norm}[1]{\lVert #1 \rVert}
+
+%% Custom chapter reference
+
+\newcommand{\customref}[1]{\ref{#1}.~''\nameref{#1}''}

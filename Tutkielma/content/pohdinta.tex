@@ -1,0 +1,98 @@
+\chapter{Pohdinta ja johtopäätökset}
+\label{cha:pohdinta}
+
+\section{Tulosten analyysi}
+\label{sec:tulosten_analyysi}
+
+\subsection{Energiafunktio}
+\label{sub:pohdinta_energiafunktio}
+
+Luvussa~\ref{sec:algoritmin_tulokset} esitettyjen tulosten perusteella voidaan todeta että algoritmi toimii yleensä kelvollisesti.
+Silmämääräisesti energiafunktioltaan parhaat ratkaisukiekot ovat usein varsin lähellä oikeaa.
+Energiafunktion teoreettista globaalia minimiä voidaan arvioida laskemalla energiafunktion $E_\text{naiivi}$ odotusarvo $\E$ $50x50$-kokoiselle kuvalle, jossa teoreettisen ihanteellisten ratkaisuympyröiden $P \ast A_W$ peittäessä datan ympyrät on jäljellä pelkkää mallin mukaista satunnaiskohinaa.
+Odotusarvoksi saadaan
+\begin{align}
+    \E \Big[ E_\text{naiivi}([E]_{>0}) \Big] &= \E \Big[ \sum_{i,j} [E(i,j)]_{>0}^2 \Big],\\
+    \intertext{
+        missä kukin matriisin $[E]_{>0}$ alkio $[E(i,j)]_{>0}$ on yhtälön~\eqref{eq:leikkaus} mukainen satunnaismuuttuja, joka saadaan 'leikkaamalla' $U(-0.5, 0.5)$-jakautunut muuttuja $E(i,j)$ välille $[0,1]$,
+        jolloin kun satunnaismuuttujan $E(i,j)$ tiheysfunktiota merkitään $p_{E(i,j)}(x)$
+    }
+    \label{eq:teorglob1}
+    &= \sum_{i,j} \E \Big[ [E(i,j)]_{>0}^2 \Big] \\
+    \label{eq:teorglob2}
+    &= \sum_{i,j} \left( \int_0^{0.5} x^2 p_{E(i,j)}(x) dx + \int_{-0.5}^0 0 \cdot p_{E(i,j)}(x) dx \right)\\
+    &= \sum_{i,j} \Big[\frac{x^3}{3}\Big]^{0.5}_{0} = \sum_{i,j} \frac{1}{3 \cdot 8} = \sum_{i,j} \frac{1}{24}\\
+    &= \frac{50\cdot50}{24} \approx 104.17,
+\end{align}
+mikä on hyvin lähellä muutamia myös silmämääräisesti erikoisen hyvin onnistuneiden ratkaisujen lopullisia energiatasoja, esimerkkinä kuvan~\ref{fig:set2_datasets_res_99} ratkaisu, jonka loppunenergia $\approx 112.71$ (taulukossa~\ref{tab:2_res_errors}).
+Toisaalta pitää myös huomioida, että simuloidun datan ja mallin erojen ynnä muiden virheiden vuoksi on epärealistista odottaa tällaista ideaalista ratkaisua, jossa energiafunktiolla arvioitaisiin kuvaa josta kiekot olisi poistettu täydellisesti ja jäljellä olisi vain kohinaa.
+
+Yllä vaihe~\eqref{eq:teorglob1} seuraa odotusarvon lineaarisuudesta ja \eqref{eq:teorglob2} yleisestä kaavasta muunnetun (myös sekatyyppisen) satunnaismuuttujan odotusarvolle,
+\begin{equation*}
+    \E [g(X)] = \int_{-\infty}^{\infty} g(x) p_X(x) dx,
+\end{equation*}
+joiden tarkemmat perustelut löytyvät esimerkiksi luentomonisteessa~\cite{koistinen2013}.
+
+Toisaalta kuten jaksoissa~\ref{sub:energiamaasto} ja \ref{sub:paranneltu_monen_kiekon_energiafunktio} oletettiin, paranneltu energiafunktio $E_\text{par}$ ei ole täydellinen:
+ihmissilmään suunnilleen oikeissa paikoissa sijaitsevat mutta hieman epätarkasti $A_\text{data}$:n peittävät ratkaisukiekot, kuten kuvassa~\ref{fig:A_datasets_res_fast} viiden kiekon testidatan c ratkaisu ($\alpha = 0.90$, loppuenergia $\approx 159.5$), on parempi ratkaisu kuin esimerkiksi saman datan toinen ratkaisu (kuvassa~\ref{fig:A_datasets_res_fast}, $\alpha = 0.99$, energia $\approx 149.5$)
+jossa suuret kiekot ovat sijoittuneet tarkemmin kuin $\alpha = 0.90$ -skenaariossa mutta yksi pieni kiekko täysin väärässä paikassa.
+Energiafunktio ja $m_\text{symm}$ ovat arvoltaan kuitenkin kyseisellä silminnähden huonommalla ratkaisulla parempia, toisin kuin intuitiota paremmin vastaava mitta $m_\text{sov}$.
+Suurten kiekkojen pienetkin virheet näkyvät suuren pinta-alansa vuoksi energiafunktiossa ja virhemitasssa $m_\text{symm}$ herkästi.
+Näin ollen ylipäätään pienet kiekot olivat algoritmille vaikeita, kuvat~\ref{fig:set3_datasets_res_099} -- \ref{fig:set3_datasets_res_090}.
+
+\subsection{Jäähdytysstrategiat}
+\label{sub:pohdinta_jaahdytysstrategiat}
+
+Samoin kuten jäähdytysmenetelmän kirjallisuus antaa olettaa, hitaat jäähdytysskenaariot saavuttavat jossain määrin parempia tuloksia kuin hitaat.
+Vaikka sadan kulkijan joukosta valikoidut kaikkein parhaat ratkaisut saavat kaikki melko hyviä ja varsin samanlaisia tuloksia kaikilla $\alpha$ (kuvat~\ref{fig:set2_datasets_res_99} -- \ref{fig:set2_datasets_res_90}, \ref{fig:set3_datasets_res_099} -- \ref{fig:set3_datasets_res_090}), hitaan ja hieman nopeamman jäähdytyksen ero näkyy kaikkien kulkijoiden loppuenergioiden histogrammissa~\ref{fig:set3_histo_compare_2_099_090}:
+Nopeilla skenaarioilla histogrammin massa on oikeammalla.
+
+Lisäksi havaitaan että useiden kiekkojen ongelmissa jakauma ei ole aina unimodaalinen,
+vaan erityisesti nopeilla strategioilla huomattavan moni kulkija voi 'jäähtyä' epäedulliseen konfiguraatioon jossa vain osa kiekoista löydetään.
+(Havainnollistava kuva~\ref{fig:A_modalbin_cc_fast_1}, vastaavia piikkejä myös \ref{fig:set3_histo_compare_2_099_090}.)
+
+Toisaalta kuitenkin vastapainona nopealle jäähdytysstrategialla kulkijakokoelman kokoa kasvattamalla todennäköisyyttä että nopeakin jäähdytys löytää hyvän tuloksen (kuva~\ref{fig:set2_best_final_e_walkers}).
+Optimaalisen tasapainon löytäminen jäähdytysskenaarion pituuden ja kulkijakokoelman koon välillä, ja etenkin sen dynaaminen arvioiminen ongelmanratkaisun aikana on eräs menetelmä jäähdytysmenetelmän kaltaisten algoritmien nopeuttamiseksi \cite{salamonetal}.
+
+\subsection{Ulottuvuuskirous}
+\label{sub:ulottuvuuskirous}
+
+Kiekkojen lukumäärän kasvaessa yhdellä ongelman optimoitavien parametrien avaruuden ulottuvuus kasvaa kolmella.
+Tunnetusti optimointiongelmissa tämä avaruuden koon kasvu vaikeuttaa optimoiniongelmia, ja tästä syystä myös kiekkojen määrä oletettiin tunnetuksi vakioksi.
+Näin ollen vielä tutkielman pienillä kiekkomäärillä $k = 1, \dots, 5$ ulottuvuuksien kasvu ei näyttänyt olevan jäähdytysalgoritmille suuri ongelma.
+
+\section{Johtopäätökset ja pohdinta}
+\label{sec:johtopaatokset}
+
+\subsection{Algoritmi}
+\label{sub:jp_algoritmi}
+
+Jäähdytysalgoritmi löysi esitettyyn kuvaongelmaan hyvän ratkaisun melko luotettavasti,
+joten tässä mielessä metodia voi pitää toimivana.
+SA on vakiintunut menetelmä, josta on laajalti monenlaisia sovelluksia.
+Tässä tutkielmassa sovellettiin perinteistä jäähdytysalgoritmin muotoilua hyvin yksinkertaisella jäähdytysskenaariolla.
+Myös toiminnan analysointiin ja parantelemiseen kuhunkin ongelmaan sopivaksi kirjallisuus esittelee runsaasti termodynamiisesta analogiasta inspiroituneita työkaluja,
+joiden käsittely jää tämän tutkielman ulkopuolelle.
+(Esimerkiksi tilastollisen mekaniikan käsitteiden, kuten jäähdytettevän ongelman 'ominaislämmön' tai 'entropian', hyödyntäminen ongelman rakenteen tutkimisessa, tai jäähdytysskenaarion tai siirtojen optimoinnissa , \cite[ks.][]{salamonetal}.
+Nykyisenlaajuisessa tarkastelussa soveltamalla algoritmia erilaisiin ympyräkuviin erilaisilla jäähdytysskenaarioilla havaittiin SA:lle tyypillistä käytöstä.
+
+\subsection{Konenäkötehtävä}
+\label{sub:jp_konenako}
+
+Kuten luvussa~\customref{cha:johdanto} todettiin, oletettu kuvantunnistusongelma on melko yksinkertainen:
+
+Esimerkiksi kiekkojen määrän olettaminen tunnetuksi on rajoittava yksinkertaistus.
+SA-algoritmia voisi laajentaa kasvattamalla parametriavaruuden kokoa oletettuun ympyröiden maksimimäärään,
+mutta vastavuoroisesti ulottuvuuksien määrä kasvattaisi ongelman kokoa.
+Eräs mielenkiintoinen vaihtoehto voisi olla soveltaa jotain perinteistä erillisten yhtenäisten komponenttien laskemiseen (\emph{connected-component labeling}) tunnettua algoritmia \cite{cormenetal09} objektien lukumäärän selvittämiseen,
+ja sitten soveltaa tässä esitettyä SA-algoritmia.
+(Kappaleiden laskemista kuvassa voidaan myös lähestyä yleisenä ongelmana koneoppimisen menetelmin, kuten esimerkiksi \cite{lempitskyzissermanNIPS10}.)
+
+Toisaalta myös erilliset ympyrät ovat myös melko rajoittunut malli monimutkaisempien muotojen mallintamiseen.
+Tällaisten vaikeuksien vuoksi konenäön alalla muotojen mallintamisessa  tässä tutkielmassa käytetyn kaltaisten geometristen mallia sijasta suositumpia ovat erilaisiin merkitsiviin pisteisiin perustuvat mallit (esimerkiksi \emph{active contour model, snakes} \cite{prince2012}).
+
+Yhteenvetona, yleisesti reaalimaailman dekonvoluutiosovelluksia ajatellen tässä tutkielmassa käsitelty ongelma on rajoittunut.
+Usein tutkittavan kuvan rakenteesta ei voida tehdä näin yleisiä ja joudutaan käyttämään paljon yleisempiä malleja.
+Mutta ''oikeiden'' konenäön ongelmien ratkaisussa käytetään yleisellä tasolla samankaltaisia metodeja:
+Sumennosta kuitenkin mallinnetaan konvoluutio-operaationa,
+ja ratkaisun lähtökohtana on usein muodostetaan jokin sopiva energiafunktio, jota optimoidaan.

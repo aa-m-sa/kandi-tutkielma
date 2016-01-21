@@ -1,0 +1,365 @@
+\chapter{Kiekko-ongelman kuvamalli}
+\label{cha:kuvamalli_ja_aineisto}
+
+\section{Digitaalinen harmaasävykuva}
+\label{sec:digitaalinen_kuva}
+
+Digitaalisessa kuvankäsittelyssä kuvan ja erityisesti valokuvan tapaisen kuvadatan tyypillinen esitysmuoto on pieninä kuvaelementteinä, \emph{pikseleinä}, (engl. \emph{pixel}, lyhenne termistä \emph{'picture element'}) ruudukossa.
+Esitysmuotoa kutsutaan \emph{rasterikuvaksi} tai \emph{bittikarttakuvaksi}.
+\footnote{Mainittakoon, että on myös olemassa vektorigrafiikkaa, jossa kuva esitetään geometristen objektien (kuten polkujen) avulla.
+Jatkossa 'kuvalla' ja 'kuvadatalla' tarkoitetaan rasteri- / bittikarttakuvaa.}
+Harmaasävykuvassa (engl. \emph{greyscale image}) kullakin pikselillä on numeriinen arvo, joka kertoo kattaman kuvapinnan alueen keskimääräisen valoisuuden eli intensiteetin.
+Tästä nimi ''bittikartta'':
+yleisissä tietokoneohjelmistojen käyttämissä tallennusmuodoissa pikselin valoisuus ilmaistaan 8-bittisellä kokonaisluvulla väliltä $0$ ja $2^8 -1 = 255$ (binäärinä $0_2$ ja $1111111_2$).
+Vuorostaan RGB-värikuvassa pikseliin liittyy väri-informaation antava RGB-arvo (kolme erillistä 8-bittistä kanavaa punaiselle, vihreälle ja siniselle).
+
+Harmaasävykuvan luonnollinen vastaava matemaattinen malli on $m \times n$-matriisi
+\begin{equation}
+    A \in [0, 1]^{m \times n},
+\end{equation}
+missä $m$ ja $n$ antavat kuvan koon.
+Alkioiden arvot ovat reaalilukuja välillä $[0, 1]$, jotka vastaavat kyseisen pikselin valoisuutta: 0 on täysin musta pikseli, 1 valkoinen.
+\cite[29--32]{jähne}
+
+Matriisin koordinaateissa $(i,j)$ sijaitsevaa pikseliä merkitään $A(i,j)$.
+
+Vaikka matemaattisissa malleissa kuvamatriisin alkiot käsitetään reaaliluvuiksi, tietokone laskee diskreetissä lukuavaruudessa.
+%\cite[35--37]{jähne}
+Jäljempänä esiteltävän algoritmin käytännön toteutuksessa (Matlab) laskenta tapahtuu liukulukumatriiseilla, jotka esitetään yllä kuvaillun kaltaisina pikselikuvina.
+Vaikka liukulukulaskenta pystyy mallintamaan reaalilukuja vain tiettyyn tarkkuuteen asti,
+ovat siitä aiheutuvat virheet niin pieniä ettei niitä tarvitse tämän tutkielman piirissä huomioida tarkemmin.
+
+\section{Ongelmanasettelu ja kuvamalli}
+\label{sec:ongelmanasettelu}
+
+Oletetaan että tutkittavana on digitaalinen harmaasävyvalokuva, joka esittää $k$ kappaletta erillisiä mustia objekteja valkoisella taustalla,
+ja objektit voidaan tulkita tasavärisiksi ympyräkiekoiksi.
+Tehtävänä on määrittää kuvadatasta objektien $w_1, \dots, w_k$ määrä, sijainti ja koko.
+Tutkittavien harmaasävykuvien ajatellaan syntyneen tavallisen (digitaalisen) kameran kaltaisessa systeemissä,
+joten kuvamallissamme otetaan huomioon tyypillisiä tällaisessa systeemissä kuvadataa huonontavia virhelähteitä.
+
+Matemaattinen mallimme $k$ ympyräkiekkoa $W= {w_1, ..., w_k}$ tuottavasta prosessista on
+\begin{equation}
+    \label{eq:kuvamalli}
+    A_\text{havaittu} = P \ast A_W + E,
+\end{equation}
+missä havaittu lopullinen kuvadata $A_\text{havaittu}$ on ideaalinen ympyräkiekkoja esittävä kuva $A_W$, johon on kohdistunut kahdenlaisia virheitä:
+kuva on sumentunut, mitä mallinnetaan konvoluutio-operaatiolla $P\ast A_W$, ja siinä on additiivista kohinaa $E$.
+
+Seuraavaksi määritellään ideaalisen kuvamatriisin $A_W$ tuottaminen kiekkokokoelmasta $W$, konvoluutio-operaatio ja additiivinen kohina.
+Kuvaillaan myös kuinka tätä yleistä kuvamallia sovelletaan simuloidun aineiston tuottamiseen ja aineiston tutkimiseen käytetty 'havaintomalli',
+jota hyödynnetään luvussa~\ref{cha:algoritmin_soveltaminen} kiekkojen löytämiseen simuloidusta aineistosta.
+
+\section{Ympyräkiekot}
+\label{sec:kiekot}
+
+Tavoitteena on rekonstruoida kuvadatan pohjalta ympyräobjektit, joista kukin voidaan yksilöidä järjestettynä kolmikkona (tai vektorina)
+\begin{equation}
+    w = (x_0, y_0, r) \in m\times n\times \R,
+\end{equation}
+missä $x_0, y_0$ on ympyrän keskipisteen koordinaatti $m \times n$ kuvamatriisissa $A$ ja $r$ ympyrän säde.
+
+\subsection{Yksi kiekko}
+\label{sub:yksi_kiekko}
+
+\emph{A priori} -tietomme kuvan esittämien kappaleiden muodosta ja luonteesta mahdollistaa niiden oleellisen informaatiosisällön esittämisen kolmella parametrilla. Tulkitaan että kolmikko $(x_0, y_0, r)$ määrää yhden mustan ympyrän valkoisella pohjalla kuvamatriisissa $A$ seuraavan funktion avulla:
+\begin{maar}
+    Ympyrä, jonka keskipiste on $(x_0, y_0)$ ja säde $r > 0$, voidaan kuvata kuvamatriisiksi $A$ funktiolla
+    $f: m\times n\times \R \to [0, 1]^{n\times n},$
+    \begin{equation*}
+        f(x_0, y_0, r) = A, \text{missä }
+        \begin{cases}
+            A_{i,j} &= 0, \text{ jos pikselin $(i,j)$ keskipiste on ympyrän sisällä}\\
+            A_{i,j} &= 1, \text{ muulloin}
+        \end{cases}
+    \end{equation*}
+    missä ympyrän (ympyräkiekon sisällä) jos $\norm{(i, j) - (x_0, y_0)} \leq r$.
+\end{maar}
+
+Teimme yllä muutaman tietoisen yksinkertaistuksen numeerisen laskennan helpottamiseksi.
+Ensinnäkin oletamme että ympyräkiekkojen keskipisteet sijaitsevat aina tarkalleen jonkin pikselin kohdalla ($x_0, y_0$ kokonaislukuja jotka vastaavat pikselien koordinaatteja);
+realistisemmin olettaisimme koordinaatit $x_0$ ja $y_0$ reaaliluvuiksi kuvamatriisin alueella, ja laskisimme mitkä pisteet kuuluvat ympyräkiekkoon laskemalla niiden etäisyydet niihin.
+Toiseksi mallimme ympyräkiekosta on varsin karkea graafisessa mielessä:
+pikseli on joko täysin musta tai valkea.
+
+\subsection{Monta kiekkoa}
+\label{sub:monta_kiekkoa}
+
+Malli voidaan yleistää useammalle kiekolle.
+Oletetaan että meillä on $k$ kappaleen (järjestämätön) kokoelma kiekkoja $W = \left\{w_1, \dots, w_k\right\}$.
+Intuitiivisesti vastaavassa kuvamatriisissa pikseli on valkea, jos se ei kuulu mihinkään ympyräkiekkoon, ja musta jos se kuuluu johonkin kiekkoon.
+Kokoelma on järjestämätön, sillä tulokseksi saadaan samanlainen kuva riippumatta missä järjestyksessä sen ympyrät luetellaan.
+
+\begin{maar}
+    $k$ ympyräkiekkoa $w_1, \dots, w_k$ voidaan kuvata kuvamatriisiksi $A$ funktiolla $f_{\text{monta}} : \left( m \times n \times \R \right)^k \to [0, 1]^{m \times n},$
+    \begin{equation*}
+        f_{\text{monta}}(w_1, \dots, w_k) = A, \text{missä }
+        %\begin{cases}
+        \left\{
+        \begin{aligned}
+            A_{i,j} = 0, &\text{ jos pikselin $(i,j)$ keskipiste on}\\
+             & \text{ jonkin ympyrän $w_i$ sisällä}
+            \\
+            A_{i,j} = 1, &\text{ muulloin}
+        \end{aligned}
+        \right.
+        %\end{cases}
+    \end{equation*}
+\end{maar}
+Suoraan nähdään että kokoelman $W$ vektoreiden $w_1, \dots, w_k$ järjestyksellä funktion $f_{\text{monta}}$ parametreina ei ole väliä,
+\begin{equation}
+    f_{\text{monta}}(w_1, \dots, w_i, w_j, \dots, w_k) = f_{\text{monta}}(w_1, \dots, w_j, w_i, \dots, w_k), \quad i \not = j.
+\end{equation}
+Näin ollen merkintä $f_{\text{monta}}(W)$ on järkevä.
+
+Näin määritellyn kiekkomallin avulla voidaan tulkita ympyräkokoelma $W$ vastaavaksi kuvamatriisiksi $A = A_W = f_{\text{monta}}(W)$,
+ja jatkossa teemme näin suoraan mainitsematta funktiota $f_{\text{monta}}$ eksplisiittisesti.
+
+Funktio on helppo toteuttaa ohjelmallisesti ''ja'' -operaatiolla $\wedge$ matriiseille:
+\begin{maar}
+Jos $A = B \wedge C$, missä $A, B, C$ ovat $m \times n$ -matriiseja, niin
+\begin{equation}
+    A_{i,j} =
+    \begin{cases}
+        &1, \text{ jos } B_{i,j} = 1 \text{ ja } C_{i,j} = 1 \\
+        &0, \text{ jos } B_{i,j} = 0 \text{ tai } C_{i,j} = 0.
+    \end{cases}
+\end{equation}
+\end{maar}
+
+Jos $A_i$ on ympyräkiekkoa $w_i$ vastaava kuvamatriisi eli $A_i = f(w_i), i = 1, \dots, k$, voimme käsitellä kuvamatriiseja $A_i$ \emph{maskeina} ja kirjoittaa koko kiekkokokoelmaa vastaavan kuvamatriisin $A_W$ niiden avulla
+    \begin{equation}
+        A_W = A_1 \wedge \dots \wedge A_k.
+    \end{equation}
+
+\section{Konvoluutio}
+\label{sec:konvoluutio}
+
+Digitaalisessa kuvankäsittelyssä kuvan sumentaminen (engl. \emph{blurring}, tai pehmentäminen, engl. \emph{smoothing}) tehdään soveltamalla kuvamatriisiin $A$ sopivaa (lineaarista) suodatinta $P$ (engl. \emph{filter}).
+Tuloksena saadaan summennettu kuva $A_\text{sumea}$, jossa kunkin pikselin $A_\text{sumea}(i,j)$ arvo perustuu vastaavan alkuperäisen, terävän kuvamatriisin $A$ pikselin $A(i,j)$:n ja sen ympäristön arvoihin.
+Tämä on intuitiivinen analogia fysikaaliselle ilmiölle, jossa virheellisesti tarkennetun optisen systeemin linssi- tai peilijärjestelmä kohdistaa havaittavasta kohteesta peräisin olevan valon epätarkasti kameran CCD-kennon tai silmän verkkokalvon kaltaiselle havaintopinnalle ja tuottaa sumean kuvan.
+
+Käytännössä $A_\text{sumea}(i,j)$ saadaan ottamalla $A(i,j)$:n ympäristön pikseleistä painotettu keskiarvo.
+Painotetun keskiarvon painot ja sen, mitä oikeastaan tarkoitetaan 'ympäristöllä' kertoo suodatinmatriisi $P$.
+Formaalisti tällainen suodatus vastaa $A$:n ja $P$:n (lineaarista) \emph{konvoluutiota} $P \ast A$, jonka määrittelemme seuraavaksi.
+Sanomme joskus lyhyesti että kuvamatriisille $A$ tehdään (lineaarinen) konvoluutio-operaatio $P \ast$.
+\cite{burger09}
+
+Yleisesti funktioteoriassa konvoluutio on kahden funktion $f$ ja $g$ välinen operaatio, joka määrittelee uuden funktion $f \ast g$.
+\begin{maar}
+    Funktioiden $f$ ja $g$ \emph{konvoluutio} $f \ast g$ on
+    \begin{align*}
+        f \ast g = (f \ast g) (x)
+        &= \int_{-\infty}^{\infty}f(t)g(x - t)\df{t}
+    \end{align*}
+\end{maar}
+
+\begin{lause}
+    Konvoluutio on vaihdannainen, $f \ast g = g \ast f$:
+\end{lause}
+
+\begin{proof}
+    Todistus seuraa soveltamalla muuttujanvaihtokaavaa epäoleelliselle integraalille:
+    \begin{align*}
+        f \ast g = (f \ast g) (x)
+        &= \int_{-\infty}^{\infty}f(t)g(x - t)\df{t} \\
+        &= \lim_{a \to \infty} \int_{-a}^a f(t)g(x-t)\df{t}, \\
+        \intertext{tehdään muuttujanvaihto $t = x - s, \df{t} = -\df{s}$, jolloin}
+        &= \lim_{a \to \infty} \int_{x + a}^{x - a} -f(x - s)g(s)\df{s}\\
+        &= \lim_{a \to \infty} \int_{x - a}^{x + a} f(x - s)g(s)\df{s}\\
+        &= \int_{-\infty}^{\infty}g(s)f(x -s)\df{s},
+    \end{align*}
+    missä viimeinen integraali on haluttua muotoa ja määritelmän mukaan $g \ast f$.
+\end{proof}
+
+Mikäli funktioiden $f, g$ määrittelyjoukko on kokonaislukujen joukko, integraali voidaan luonnollisella tavalla korvata summana.
+Toisin sanoen voidaan määritellä \emph{diskreetti konvoluutio}:
+
+\begin{maar}
+    Diskreetti konvoluutio on
+    \[
+        (f \ast g) (n) = \sum^{\infty}_{m=-\infty} f(m) g(n - m),
+    \]
+    joka yleistettynä kahteen ulottuvuuteen $\Integer^2$ on
+    \[
+        (f \ast g)(n_1, n_2) =
+        \sum^{\infty}_{m_1=-\infty} \sum^{\infty}_{m_2=-\infty}
+        f(m_1, m_2) g(n_1-m_1, n_2-m_2).
+    \]
+\end{maar}
+
+Funktioille määritelty konvoluutio voidaan helposti laajentaa matriiseille samastamalla yleinen reaalinen matriisi $B \in \R^{m \times n}$ sen määräämän funktion $f_B:~m \times n \to R^{m \times n}$ kanssa, missä $f_B$ saa arvonsa matriisista $B$
+\begin{equation}
+    f_B(i, j) = b_{i,j} = B(i,j),
+\end{equation}
+missä $b_{i,j}$ on $B$:n alkio $i.$ rivillä ja $j.$ sarakkeessa.
+
+Toisin sanoen merkintämme $A$:n konvolvoimiselle $P$:llä
+\begin{equation}
+    A_\text{sumea} = P \ast A
+\end{equation}
+on järkevä.
+Määritellään vielä konvoluutiomatriisi $P$ tarkemmin ja tutkitaan kuinka sumennos käytännössä konvoluutiossa tapahtuu.
+
+\begin{maar}
+    Konvoluution $P \ast$ ydin (engl. \emph{kernel}) eli konvoluutiomatriisi eli suodatinmatriisi $P$ on äärellinen $K \times L$ -matriisi joillekin luonnolliselle luvulle $K, L \in \Natural$.
+    Konvoluutio-operaatiossa $P$:n ajatellaan olevan 0 $K \times L$ -matriisin ulkopuolella.
+\end{maar}
+
+Oletetaan että $P$ on $3 \times 3$ konvoluutiomatriisi, joka on indeksoitu niin että keskimmäinen alkio on $p_{0,0}$, ja $A$ on $m \times n$ -kuvamatriisi.
+Tällöin diskreetti kaksiulotteinen konvoluutio $P \ast A$ saadaan määritelmän mukaan seuraavasta yhtälöstä, kun $1 \leq k \leq m$ ja $1 \leq l \leq n$:
+\begin{align}
+    \label{eq:konvoluutiosumma}
+    (P \ast A)(k,l) &= \sum^{\infty}_{i=-\infty} \sum^{\infty}_{j=-\infty} P(i, j) A(k - i, l - j) \\
+    \intertext{Ottaen huomioon että $P$:n arvo konvoluutiomatriisin ulkopuolella on 0 eli $3 \times 3$ matriisin tapauksessa $P(i, j) = 0$ kun $ \abs{i} > 1$ tai $\abs{j} >1$, voidaan kirjoittaa:}
+        &=  \sum_{i = -1}^1\sum_{j = -1}^1 P(i, j) A(k - i, l - j) \\
+        &=  \mathop{\sum\sum}_{i, j = -1, 0, 1} P(i, j) A(k - i, l - j)
+\end{align}
+
+Toisin sanoen $P \ast A$ voidaan tulkita $n \times n$ -kuvamatriisiksi, jonka kunkin $(k,l)$-pikselin $(P \ast A)(k,l)$ arvo on painotettu summa $A(k,l)$:sta ja sen naapuripikseleistä, missä painot saadaan konvoluutiomatriisista.
+
+\subsection{Reunat}
+\label{sub:reunat}
+
+Vielä on sovittava kuinka käsitellään $A$:n reunat,
+eli tapaukset jolloin kaavassa~\ref{eq:konvoluutiosumma} summattava $A(i, j)$ ei ole määritelty koska indeksit $(i, j)$ menevät $A$:n rajojen ulkopuolelle, $i < 1$ tai $i > m$ tai $j < 1$ tai $j > n$.
+
+Yksinkertaisin vaihtoehto olisi yksinkertaisesti jättää summasta~\ref{eq:konvoluutiosumma} pois ne pikselit joissa konvoluutio-operaatio ei näin tulkittuna olisi määritelty;
+tällöin konvolvoitu matriisi $P \ast A$ olisi mitoiltaan pienempi kuin alkuperäinen $A$, mikä ei ole toivottavaa.
+
+Toinen usein käytetty vaihtoehto on 'laajentaa matriisia nollalla', ja tulkita matriisin $A$:n pikseleiden $A(i,j)$ arvot nollaksi kun $i,j$ ovat matriisin ulkopuolella.
+Koska valitussa kuvamallissa kuvamatriisin $A$:n arvot 'neutraalia' tyhjää taustaa esittävillä alueilla ovat $1$ ja kappaleen kohdalla $0$ (kuvamme esittää tummia kappaleita valkealla taustalla), käytetään 'nollana' lukua 1.
+\footnote{Tai vaihtoehtoisesti tuottaa kuvadatasta käänteiskuva ja operoida sillä: matriisin alkio on $1 = \text{kuuluu ympyräkiekkoon}, 0 = \text{ei kuulu kiekkoon}$.}
+Ongelmaksi jää tällöin tilanne, jossa ympyräkiekko ei ole kokonaan kuvan sisällä: tällaiset kiekot saisivat kuvan laidassa valkean reunan.
+
+Kolmas yleinen ratkaisu on laajentaa kuvamatriisia konvoluutiota laskettaessa toistamalla 'nollan' sijasta $A$:n olemassaolevia reunapikselejä.
+Koska puuttuvien konvoluution laskemiseen tarvittavat alueet ekstrapoloidaan, tämäkin aiheuttaa pienen vääristymän.
+\footnote{Parhaassa tapauksessa konvolvoitava raakakuva olisi suurempi kuin tarpeen, jolloin siitä voitaisiin leikata reunat pois ja syntyvä pienempi kuva olisi toivottun kokoinen.}
+Tutkielmassa käytetyillä pienillä konvoluutiomatriiseilla vääristymä on kuitenkin hyvin pieni.
+\cite{burger09}
+
+Joissain tapauksissa on hyödyllistä tulkita kuva \emph{toruspintana},
+jolloin kunkin reunan yli menevät pikselit tulkitaan otettavaksi vastakkaisesta reunasta.
+Näin määriteltyä konvoluutiosuodatinta sanotaan myös \emph{sykliseksi} konvoluutioksi.
+Käytännössä ero siihen että kuvamatriisia jatkettaisiin on myös pienillä konvoluutiomatriiseilla pieni.
+\cite[104--106]{jähne}
+
+Vast'edes tutkielmassa sovitaan, että konvoluutio-operaatiossa reunat käsitellään kolmannella esitetyllä tavalla eli jatkamalla olemassaolevia reunapikseleitä.
+
+\section{Kohina}
+\label{sec:kohina}
+
+Tavoitteena on mallintaa prosessia, jonka tuottamat kuvat sumentuneen lisäksi kohinaisia, mihin käytämme additiivista kohinamallia.
+
+Yleisesti kohinalla tarkoitetaan havaitussa kuvassa $A_\text{havaittu}$ ei-toivottua satunnaista komponenttia.
+Additiivisessa kohinamallissa tätä mallinnetaan lisäämällä kohinattomaan kuvaan satunnaismatriisi $E$,
+jossa jokainen pikseli alkio (pikseli) on jokin satunnaismuuttuja.
+Jos sumennettu (konvolvoitu) kuva on $P \ast A$, lopullinen sumentunut ja kohinainen kuva on
+\begin{equation*}
+    P \ast A + E.
+\end{equation*}
+Tällaisessa mallissa kohinamatriisin $E$ jakauma tyypillisesti riippuu mallinnettavasta häiriölähteestä.
+Monia yleisiä kohinatyyppejä mallinnetaan normaalijakautuneella kohinamallilla (\emph{Gaussian noise}),
+kuten esimerkiksi laitteiston elektronisten komponenttien lämpökohinaa (\cite{boncelet05bovik}) tai approksimaationa Poisson-jakautuneesta otoskohinasta \cite[Ks. esim.][ luku 3.4.5]{jähne}.
+Toinen yleinen kohinatyyppi on nk. suola ja pippuri -kohina (\emph{salt and pepper noise}), jota syntyy esimerkiksi digitoinnissa tai digitaalisessa tiedonsiirrossa: kuvan pikseleistä vain harvaan on kohdistunut virhe, mutta häiriöt ovat hyvin suuria suuntaan tai toiseen,
+jolloin kuva näyttää siltä ikään kuin sille olisi ripoteltu suolaa ja pippuria \cite{boncelet05bovik}.
+
+Yhteistä edellämainituille virhelähteille on, että kohina syntyy vasta kuvan digitaalisessa talteenottolaitteistossa:
+kuva on jo sumea havaintopinnan tulkitessa sen digitaaliseksi signaaliksi.
+Tässä mielessä additiivinen malli on mielekäs.
+
+
+\section{Havaintomalli ja simuloidun aineiston malli}
+\label{sec:simuloitu_aineisto}
+
+Edellä määriteltiin yleinen kuvamalli
+\begin{equation*}
+    \tag{\ref{eq:kuvamalli}}
+    A_\text{havaittu} = P \ast A_W + E
+\end{equation*}
+sumentuneita ja kohinaisia kiekkokuvia tuottavasta prosessista.
+
+Tutkielmassa esitellyn algoritmin toimivuutta esitettyyn ongelmaan testataan kokeilemalla sitä simuloituun aineistoon.
+Oikeasssa tutkimustilanteessa havaintomalli olisi muodostettu approksimoimaan jotain todellista prosessia,
+ja fysikaalisesta prosessista muodostettu malli on usein ainakin hieman epätarkka, sillä tutkittava prosessi harvoin tunnetaan aivan täydellisesti.
+
+Näin ollen olisi epärealistista sekä tuottaa simuloitu aineisto että sitten analysoida sitä täsmälleen samanlaiseen malliin perustuen.
+Oletetaan kuitenkin että havaintomallimme on approksimoi todellisuutta varsin hyvin,
+jolloin simuloituun aineistoon $A_{\text{data}}$ voidaan käyttää periaatteeltaan samaa mallia
+\begin{equation}
+    \label{eq:aineistomalli}
+    A_{\text{data}} = P_{\text{data}} \ast A_W + E,
+\end{equation}
+missä datan luomiseen käytetty sumentava suodatin on hieman erilainen kuin havaintomallissa odotetaan.
+
+Kuvittelememme siis että tutkimme yleisen mallin~\ref{eq:kuvamalli} mukaista prosessia,
+jonka ''todelliset parametrit'' (konvoluutiomatriisi) ovat mallin \ref{eq:aineistomalli} mukaiset.
+Ympyröiden tunnistamiseen (seuraavasssa luvussa) kuitenkin käytetään nk. ''havaintomallia'',
+joka on hieman yksinkertaisempi kuin aineiston luomiseen käytetty ''todellinen'' malli.
+
+Käytännössä ero mallien välillä on pieni, mutta tarkoituksena on esitellä parhaita periaatteita kuinka tällaisissa tutkimusongelmissa ''realistinen'' simuloitu aineisto kannattaa tuottaa.
+Erityisesti monissa inversio-ongelmien laskennallisissa ratkaisuissa aineiston tuottaminen ja inversioratkaisun laskeminen samalla laskentamenetelmällä voi johtaa epärealistisen hyviin tuloksiin~\cite{muellersiltanen12}.
+
+\subsection{Havaintomallin konvoluutiomatriisi}
+\label{sub:mallin_konvoluutiomatriisi}
+
+Valitaan havaintomallissa käytettäväksi konvoluutiomatriisiksi $P$
+\begin{equation}
+    P = \frac{1}{26} \cdot
+    \begin{pmatrix}
+        2 & 2 & 2 \\
+        2 & 10 & 2 \\
+        2 & 2 & 2
+    \end{pmatrix}.
+\end{equation}
+Yllä matriisi kerrotaan skalaarilla $\frac{1}{26}$, jolla \emph{normitetaan} matriisi siten että konvoluutio vastaisi \emph{painotetun keskiarvon} ottamista.
+Skalaari $1/26$ saadaan yhtälöstä \[\frac{1}{26}(8\cdot2 + 10) = 1.\]
+
+Valittu $P$ muistuttaa hieman kuvan- ja signaalinkäsittelyssä käytettyä Gauss-sumennosta (engl. \emph{Gaussian low pass filter, Gaussian blur}), jossa konvoluutiomatriisin arvot saadaan kaksiulotteisesta Gaussin normaalijakaumasta.
+
+\subsection{Havaintomallin kohina}
+\label{sub:kohinamalli}
+
+Havaintomallissamme oletetaan yksinkertaisesti että kohina $E$ on tasaisesti jakautunutta valkoista kohinaa.
+Käytettävä simuloitu data (joka määritellään tarkemmin alaluvussa~\ref{sec:simuloitu_aineisto}) ei pyri mallintamaan mitään tiettyä erityistä kamerasysteemiä,
+joten voimme valita yleisen esimerkin kohinalähteestä joka huonontaa kuvan laatua varsin paljon.
+Oikeassa sovelluksessa kohinamallia todennäköisesti olisi tarpeen tarkentaa käytettävän mittaustilanteen ja -välineiden oikeasti tuottaman kohinan perusteella.
+
+Kohinamatriisi $E$ ajatellaan satunnaismatriisiksi, jonka alkiot $E(i,j) = E_{i,j}$ ovat riippumattomia tasaisesti jakautuneita satunnaismuuttujia keskiarvolla 0,
+\begin{equation}
+    E(i,j) \sim U(-0.5, 0.5)
+\end{equation}
+Tällaista kohinaa, jossa $E_{i,j}$ ovat samoin jakautuneita (riippumattomia) satunnaismuuttujia ja niiden keskiarvo on 0, kutsutaan valkoiseksi kohinaksi.\footnote{Valkoisen kohinan tarkka määritelmä joka perustuu $E$:n tehospektrin  tarkasteluun ei kuulu tämän tutkielman piiriin. Tehospektri voidaan määritellä esimerkiksi $E$:n autokorrelaatiofunktion Fourier-muunnoksen kautta, \cite[ks.][s.96 -- 97]{jähne}.}
+
+Visuaalisesti summamatriisin $P \ast A + E$ alkiot joiden arvot ovat välin $[0, 1]$ ulkopuolella tulkitaan luvuksi $0$ tai $1$ riippuen olisiko alkio välin $[0, 1]$ ala- vai yläpuolella.
+
+\subsection{Simuloidun aineiston sumennos ja kohina}
+\label{sub:simuloidun_aineiston_sumennos_ja_kohina}
+
+Sumentavaksi suodattimeksi $P_{\text{data}}$ valitaan hieman monimutkaisempi konvoluutiomatriisi, jota havaintomallin konvoluutiomatriisi yrittää ''epätarkasti'' mallintaa,
+\begin{equation}
+    P_{\text{data}} =
+    \frac{1}{36}
+    \begin{pmatrix}
+        0 & 1 & 1 & 1 & 0 \\
+        1 & 2 & 2 & 2 & 1 \\
+        1 & 2 & 8 & 2 & 1 \\
+        1 & 2 & 2 & 2 & 1 \\
+        0 & 1 & 1 & 1 & 0 \\
+    \end{pmatrix}.
+\end{equation}
+
+Simuloituun aineistoon lisättävä kohina on havaintomallin mukaista tasaista satunnaiskohinaa
+\begin{equation}
+    E(i,j) \sim U(-0.5, 0.5)
+\end{equation}
+jota on helppo generoida laskennellisilla ohjelmistoilla.
+Havaintomallin mukaisesti lopullisessa kuvassa harmaasävykuvan pikseleiden arvorajojen $[0, 1]$ ylle tai alle arvoja saavat matriisin alkiot tulkitaan pikseleiksi
+\begin{equation}
+    \label{eq:leikkaus}
+    (P \ast A + E)_\text{kuva} (i,j) =
+    \begin{cases}
+        0 , &\text{jos } (P \ast A + E)(i,j) < 0\\
+        1 , &\text{jos } (P \ast A + E)(i,j) > 1.
+    \end{cases}
+\end{equation}

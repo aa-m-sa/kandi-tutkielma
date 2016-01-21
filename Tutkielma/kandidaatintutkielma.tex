@@ -1,0 +1,52 @@
+\documentclass[11pt,a4paper,leqno]{report}
+
+\usepackage{kandi}
+
+% useful definitions
+
+\newcommand{\Author}{Aaro Salosensaari}
+\newcommand{\Title}{Mallinnettu jäähdytys ja ympyräkiekkojen etsiminen kuvasta}
+
+\usepackage{hyperref}          % linkit ja pdf-toc
+\hypersetup{
+    pdfencoding=auto,
+    colorlinks=false,
+    hidelinks,
+    pdftitle={\Title},
+    pdfauthor={\Author}
+}
+
+\usepackage{csquotes}
+\usepackage[hyperref=true, style=alphabetic]{biblatex}
+\bibliography{bibkandi}
+
+% confiugre table of cont
+\setcounter{tocdepth}{1}
+
+\begin{document}
+
+    \title{\Title}
+
+    \author{\Author\\
+        \small{ \texttt{\href{mailto:aaro.salosensaari@helsinki.fi}{aaro.salosensaari@helsinki.fi}}}
+    }
+
+    \date{\today}
+
+
+    %\maketitle
+    \input{./title}
+
+    % sisallys
+    \tableofcontents
+
+    \include{./content/johdanto}
+    \include{./content/algoritmi}
+    \include{./content/kuvamalli-ja-aineisto}
+    \include{./content/algoritmin-soveltaminen}
+    \include{./content/tulokset}
+    \include{./content/pohdinta}
+
+    % kirjallisuusviitteet
+    \printbibliography[heading=bibintoc]
+\end{document}

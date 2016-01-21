@@ -1,0 +1,476 @@
+\chapter{Mallinnettu jäähdytys}
+\label{cha:simulated_annealing_algoritmi}
+
+\section{Optimointi}
+\label{sec:optimointi}
+
+Yleisesti matemaattisissa optimointiongelmissa (optimointitehtävässä) tavoitteena on löytää annetun ongelman jossain mielessä paras ratkaisu tietystä mahdollisten ratkaisujen joukosta.
+Ratkaisuehdokkaan hyvyyttä kuvaa ratkaisuehdokkaiden avaruudessa $\Omega$ määritelty reaaliarvoinen funktio~$E$ (hintafunktio, kohdefunktio),
+ja optimointiongelman ratkaisu on avaruuden piste jossa $E$ saavuttaa minimin.
+Ongelmasta riippuen halutaan löytää paikallinen (lokaali) tai globaali minimipiste.
+(Tehtävänä voi olla myös funktion maksimointi,
+mutta koska funktion $E$ maksimointitehtävä voidaan aina esittää funktion $-E$ minimointiongelmana,
+voidaan optimointiongelma määritellä minimoinnin kautta.)
+
+\begin{maar}[Globaali diskreetti optimointiongelma]
+    \label{maar:globaali_optimointiongelma}
+    Olkoon optimointiongelman mahdollisten ratkaisujen $s$ avaruus $\Omega$.
+    Jäähdytysmenetelmän yhteydessä ratkaisumahdollisuuksia $s$ kutsutaan \emph{tiloiksi}.
+    Diskreetissä optimointiongelmassa tila-avaruus $\Omega$ on diskreetti.
+
+    Energiafunktio $E$ (myös kohde- tai hintafunktio, engl. \emph{objective function}, \emph{cost function}) on kuvaus tila-avaruudelta reaaliluvuille,
+    \begin{equation}
+        E: \Omega \to \R.
+    \end{equation}
+    Globaalin optimointiongelman ratkaisu on tila $s_\text{opt}$, jossa $E$ saavuttaa globaalin minimin,
+    \begin{equation}
+        \label{eq:energiafunktion_minimi}
+        E(s_\text{opt}) = \min_{s\in\Omega} E(s).
+    \end{equation}
+\end{maar}
+
+\begin{merk}
+    Koska tila-avaruus $\Omega$ on diskreetti ja useimmissa sovelluksissa,
+    kuten kombinatorisissa optimointitehtävissä, lisäksi äärellinen (tai korkeintaan numeroituva),
+    tiloja voidaan mielekkäästi merkitä indeksoidulla merkinnällä $s_i \in \Omega$,
+    missä $i \in \PlainSet{1, \dots, \abs{\Omega}}$.
+    Tässä tutkielmassa ratkaisuavaruus on äärellinen.
+    Jos sekaannuksen varaa ei ole, tarvittaessa väärinkäytämme merkintöjä ja  kirjoitetamme lyhyesti $s_i = i$.
+\end{merk}
+
+Konveksin funktion minimin tai yleisesti paikallisen (lokaalin) minimin,
+\begin{equation}
+    s_\text{lok. opt} = \min_s E(s), \quad \text{missä } \abs{s - s_{\text{lok. opt}}} < \delta \text{ jollain } \delta > 0,
+\end{equation}
+löytäminen on helppoa erilaisilla differentiaalilaskentaan pohjautuvilla menetelmillä
+(esimerksi kvasi-Newton-, konjugaattigradientti- tai jyrkimmän pudotuksen menetelmät).
+Sen sijaan ei-konveksien funktioiden optimointiongelmissa haasteena on välttää juuttuminen paikallisiin minimialueisiin,
+mihin tyypillinen vastaus on hyödyntää algoritmissa satunnaisuutta.
+Toisaalta haasteena on myös samalla hyödyntää ongelman rakennetta globaalin minimin löytämiseen paremmin kuin esimerkiksi yksinkertainen kattava satunnaishaku.
+Erilaiset probabilistiset ja satunnaisuuteen perustuvat (meta-)heurestiikat (kuten geneettiset algoritmit tai tabu-haku, \cite[ks. esim.][]{glover03}) ja Monte Carlo -menetelmät (mm. \emph{importance sampling}) ovat osoittautuneet toimiviksi tämänkaltaisissa ongelmissa.
+Yksi tällaisista heurestiikoista on tässä tutkielmassa käsiteltävä jäähdytysalgoritmi.
+\cite{salamonetal}
+
+\section{Esitieto: Markovin ketjut}
+\label{sec:esitieto_markovin_ketjut}
+
+Ennen jäähdytysalgoritmin tarkempaa kuvausta käydään läpi joitain perusteita Markovin ketjuista.~\footnote{Merkinnät \cite{laarhoven} tapaan.}
+
+Diskreetti Markovin ketju on stokastinen prosessi, jossa prosessin kukin tila riippuu vain edellisestä tilasta,
+toisin sanoen olettaen että ketjun tila nykyhetkellä tunnetaan, seuraava (tuleva) tila on ehdollisesti riippumaton menneistä tiloista.
+Tätä kutsutaan \emph{Markov-ominaisuudeksi} tai \emph{unohtuvaisuusominaisuudeksi}.
+
+\begin{maar}
+    Stokastinen prosessi (satunnaisprosessi) on jono ajanhetkien $k \in \Natural$ mukaan järjestettyjä satunnaismuuttujia (satunnaisvektoreita) $\vect{X}(k)$ joltain todennäköisyysavaruudelta tilajoukkoon $\Omega$.
+    Merkitään
+    \begin{equation}
+        \vect{X}(k) = \text{ketjun $k$. toteutunut tila}.
+    \end{equation}
+    Todennäköisyys että satunnaisprosessin tila $k$. hetkellä on $i$ on siis näillä merkinnöillä $\Pr\{ \vect{X}(k) = i\}$.
+    Tässä yhteydessä prosessi on jäähdytysalgoritmi, jonka tila-avaruus on optimointiongelman (korkeintaan numeroituva) tila-avaruus $\Omega$.
+\end{maar}
+
+Markovin ketju voidaan nyt määritellä formaalisti ehdollisen riippumattomuuden avulla:
+\begin{maar}
+    Markovin ketju on satunnaisprosessi \vect{X}(1), \vect{X}(2), \vect{X}(3), \dots, joilla pätee
+    \begin{equation}
+        \Pr\left\{\vect{X}(k+1) = i \mid \vect{X}(1) = j_1, \vect{X}(2) = j_2, \dots \vect{X}(k) = j_k \right\}
+        = \Pr\bigr\{\vect{X}(k+1) = i \mid \vect{X}(k) = j_k \bigr\}
+    \end{equation}
+    kaikille tiloille $i, j_1, \dots, j_k$.
+\end{maar}
+
+Markov-ketjun määräävät siis ehdolliset todennäköisyydet $\Pr\{\vect{X}(k+1) = i \mid \vect{X}(k) = j\}$,
+jotka kertovat todennäköisyyden sille, että $k+1$. siirtymän jälkeen ollaan tilassa $i$ olettaen, että $k$. askeleen tila oli $j$.
+Riippumattomuus tarkoittaa, että $k$:ta edeltävät tilat eivät vaikuta todennäköisyyteen $\vect{X}(k+1) = i$.
+
+SA-algoritmin määrittelyä varten tarvitaan Markovin ketjuja, joilla on tiettyjä ominaisuuksia:
+
+\begin{maar}
+    \emph{Homogeeni} Markovin ketju eli aikahomogeeni Markovin ketju on Markovin ketju, jossa siirtymätodennäköisyydet pysyvät samoina kaikilla $k$.
+\end{maar}
+Termillä 'aikahomogeeni' korostetaan, että kyseessä on dynaaminen prosessi jossa siirtymätodennäköisyydet pysyvät samoina ajan suhteen.
+
+Homogeenissa Markovin ketjussa siirtymät määrää jokaisella askeleella $k$ sama siirtymämatriisi $M$
+\begin{equation}
+    M_{i,j} = \Pr\{\vect{X}(k+1) = i \mid \vect{X}(k) = j\}.
+\end{equation}
+
+\begin{maar}
+    \label{maar:ergodisuus}
+    \emph{Ergodisessa}\footnote{Käytämme teoksen \cite{salamonetal} terminologiaa; joissain muissa määritelmissä ergodisuuteen vaaditaan hieman vahvempia oletuksia, ja tässä kuvailtua ominaisuutta kutsutaan \emph{pelkistymättömyydeksi} (engl. \emph{irreducibility}).} Markovin ketjussa mikä tahansa tila on saavutettavissa mistä tahansa muusta ketjun tilasta jollain siirtymien sarjalla, eli kaikilla $i,j$ on äärellinen $n \in \Natural$, jolla
+    \begin{equation}
+        \Pr\{\vect{X}(n) = i \mid \vect{X}(0) = j\} > 0.
+    \end{equation}
+    Sanotaan, että kaikki tilat \emph{kommunikoivat}.
+\end{maar}
+
+\begin{maar}
+    \emph{Periodisessa} Markovin ketjussa jokin tila $i$ toistuu $p$ siirtymän jaksoissa jollain $p \in \Natural$, eli on olemassa jakso
+    \begin{equation}
+        p = \syt\{k : \Pr\{ \vect{X}(k) = i \mid \vect{X}(0) = i \} > 0\} > 1,
+    \end{equation}
+    missä $\syt$ on suurin yhteinen tekijä.
+\end{maar}
+
+\begin{maar}
+    \emph{Aperiodiseksi} sanotaan Markovin ketjua jossa $p = 1$ kaikilla tiloilla $i$,
+    eli yhtäpitävästi ketjua, jossa kaikilla tiloilla $i$ on sellainen $k \in \Natural$ niin, että kaikilla $k' \geq k$ todennäköisyys
+    \begin{equation}
+        \Pr\{\vect{X}(k') = i \mid \vect{X}(0) = i\} > 0.
+    \end{equation}
+\end{maar}
+
+\begin{lause}
+    \label{lau:aperiodisuus}
+    Mikäli homogeenilla ergodisella Markovin ketjulla on olemassa tila $i$ jolla $M_{ii} > 0$,
+    ketju on aperiodinen.
+\end{lause}
+
+\begin{proof}
+    Määritelmän mukaan
+    \begin{equation}
+        M_{ii} = \Pr\{\vect{X}(k + 1) = i \mid \vect{X}(k) = i\} > 0 \quad \text{kaikilla } k,
+    \end{equation}
+    eli tila $i$ on aperiodinen.
+    Koska oletuksen mukaan kaikki ketjun tilat kommunikoivat,
+    kaikki muut tilat $j \not = i$ ovat saavutettavissa tilasta $i$ ja päinvastoin äärellisessä ajassa,
+    eli joillain $n_1, n_2$ pätee
+    \begin{equation}
+        \Pr\{\vect{X}(k + n_1 + n_2) = j \mid \vect{X}(k + n_1) = i, \vect{X}(k) = j \} > 0.
+    \end{equation}
+    Koska $M_{ii} > 0$, tilan $j$ todennäköisyys on positiivinen myös tapahtumille $\vect{X}(k + n_1 + n_2 + 1), \vect{X}(k + n_1 + n_2 + 2), \dots$,
+    eikä siis tilalla $j$ voi olla periodia.
+\end{proof}
+
+\begin{maar}
+    \label{maar:stationaarinen}
+    Aikahomogeenisen Markovin ketjun \emph{stationaarinen jakauma} $\vect{\pi}$ on vektori, jolle pätee
+    \begin{gather}
+        0 \leq \vect{\pi}(i) \leq 1, \\
+        \sum_i \vect{\pi}(i) = 1, \quad \text{ja} \\
+            \vect{\pi}(i) = \sum_j \vect{\pi} (j) M_{i,j} = \sum_j \vect{\pi} (j) \Pr\{\vect{X}(k+1) = i \mid \vect{X}(k) = j\}.
+    \end{gather}
+\end{maar}
+
+Seuraavat perustavanlaatuiset (\cite{laarhoven, salamonetal}) Markovin ketjuja koskevat lauseet oletetaan tunnetuiksi:
+\begin{lause}
+    \label{lause:ketjun_stat_jakauma}
+    Aikahomogeenisella Markovin ketjulla on stationaarinen jakauma (tasapainojakauma) jos ja vain jos ketju on aperiodinen ja ergodinen.
+\end{lause}
+\begin{lause}
+    \label{lause:stat_jakauman_konvergenssi}
+    Jos (homogeenilla) Markovin ketjulla on stationaarinen jakauma $\vect{\pi}$, jokainen Markovin ketju konvergoi sitä kohti kun ketjun pituus kasvaa rajatta, eli
+    \begin{equation}
+        \vect{\pi}(i) = \lim_{n \to \infty} \Pr\{\vect{X}(n) = i \mid \vect{X}(0) = j\} \quad \text{kaikilla j}.
+    \end{equation}
+\end{lause}
+
+\section{Jäähdytysalgoritmi ja sen matemaattinen malli}
+\label{sec:algoritmin_matemaattinen_malli}
+
+Kuvaillaan seuraavaksi ensin jäähdytysalgoritmin toimintaidea (jaksot~\ref{sub:jaahdytysalgoritmin_idea}, \ref{sub:algoritmin_kuvaus_metropolis_kriteeri})
+ja sitten tarkempi matemaattinen malli Markovin ketjuina (jakso~\ref{sub:algoritmin_malli_markovin_ketjuina}).
+
+\subsection{Jäähdytysalgoritmin idea}
+\label{sub:jaahdytysalgoritmin_idea}
+
+Jäähdystysalgoritmin toiminta perustuu termodynaamiseen analogiaan kiinteiden metallikappaleiden jäähdyttämiseen tietynlaisessa metallurgian lämpökäsittelymenetelmässä (engl. nimitys \emph{annealing}).
+Menetelmässä metallikappale kuumennetaan niin korkeaan lämpötilaan, että aine muuttuu nestemäiseksi ja partikkelit alkavat liikkua vapaasti ja niiden keskinäinen järjestys on satunnainen.
+Tämän jälkeen kappaleen annetaan hitaasti jäähtyä, erityisen hitaasti jäätymispisteen lähellä.
+Näin jäähdytettävä aine kristalloituu matalaenergisimpään perustilaansa,
+ja partikkelit muodostavat säännöllisen, virheettömän rakenteen.
+~\cite{kirkpatrick83, laarhoven}
+Optimointiongelman kohdefunktion arvot samastetaan jäähdytettävän kappaleen muodostaman fysikaalisen systeemin energiatiloihin.
+Algoritmissa systeemin kuhunkin lämpötilaansa liittyvän tasapainotilan (engl. \emph{thermal equilibrium}) lähestymistä simuloidaan Metropolis-Hastings -algoritmilla.
+~\cite{kirkpatrick83, salamonetal}
+
+\subsection{Algoritmin kuvaus: Metropolis-kriteeri}
+\label{sub:algoritmin_kuvaus_metropolis_kriteeri}
+
+Oletetaan että olemme määritelleet jonkin tavoite- eli energiafunktion $E$.
+Määritelmän~\ref{maar:globaali_optimointiongelma} mukaisesti
+tavoitteena on löytää tilavektori $s_\text{opt}$ joka minimoi energiafunktion $E(s_\text{opt})$ (yhtälö~\ref{eq:energiafunktion_minimi}).
+Määritellään lisäksi kontrolliparametri $t > 0$,
+joka vastaa fysikaalisen systeemin lämpötilaa.
+
+SA-algoritmi simuloi jäähtyvää fysikaalista systeemiä seuraavasti:
+Alkutilassa lämpötilan $t = t_0$ lähtöarvo $t_0$ on korkea ja se vastaa fysikaalisessa prosessissa tilannetta, jossa termodynaamisen systeemin partikkelit liikkuvat vapaasti (satunnaisesti).
+Oletetaan että hetkellä $k$ nykyinen kandidaatti optimoitavan parametrivektorin arvoksi (eli fysikaalisessa tulkinnassa \emph{systeemin tila}) on $s_i$.
+Generoidaan uusi, satunnainen tila $s_j$ nykyisen konfiguraation $s_i$ läheltä jonkin sopivan etäisyysmitan suhteen,
+ja hyväksytään se uudeksi vallitsevaksi arvaukseksi \emph{Metropolis-kriteerin} perusteella:
+
+Jos uusi tila $s_j$ on energiafunktion mielessä parempi kuin edellinen (eli $E(s_j) \leq E(s_i)$), se hyväksytään uudeksi nykyiseksi ratkaisuehdokkaaksi.
+Jos $s_j$ on huonompi kuin $s_i$ (eli $E(s_j) > E(s_i))$, hyväksymme sen joka tapauksessa lämpötilasta $t$ riippuvalla todennäköisyydellä
+\begin{equation}
+    \exp\left(-\frac{\Delta E}{t}\right),
+\end{equation}
+missä $\Delta E = \Delta E_{ji} = E(s_j) - E(s_i)$.
+Mikäli ehdokasta $s_j$ ei hyväksytä, pysytään entisessä tilassa $s_i$.
+
+Kun algoritmia on iteroitu tarpeeksi kauan (ja fysikaalisessa tulkinnassa simuloitava systeemi on saavuttanut sen hetkiseen lämpötilaan liittyvän termodynaamisen tasapainotilan), lämpötilaparametria $t$ lasketaan hieman, ja algoritmia jatketaan kunnes systeemi on ''jäähtynyt''.
+Algoritmi siis pysäytetään jollain tarpeeksi pienellä $t$:n arvolla kun voidaan jonkin kriteerin avulla todeta systeemin ''jäähtyneen'' matalaenergisimpään rakenteeseensa.
+
+Edellä kuvattu prosessi on analoginen aiemmassa alaluvussa~\ref{sub:jaahdytysalgoritmin_idea} kuvaillun lämpökäsittelyprosessin fysikaalisen mallin kanssa,
+mitä tutkitaan tarkemmin myöhemmin (alaluku~\ref{sec:algoritmin_teoreettinen_perustelu}).
+Intuitiivisesti kontrolliparametrin eli ''lämpötilan'' ollessa suuri algoritmi hyväksyy runsaasti satunnaisia siirtymiä energiafunktion suhteen ''ylämäkeen'', ja tilaehdokkaiden $s_i$ jono on hyvin satunnainen.
+Lämpötilan laskiessa algoritmi hyväksyy yhä harvemmin satunnaisia poikkeammia, ja sen sijaan valitsee todennäköisemmin vain energiafunktion suhteen parempia kandidaatteja $s_i$.
+Tämä stokastisuus selittää algoritmin kyvyn paeta paikallisia minimejä.
+
+Jäljempänä tutkielmassa alaluvussa~\ref{sub:Konvergenssituloksia} esitetään, että tiettyjen teoreettisten ehtojen vallitessa tilajono $s_i$ konvergoi kohti globaalia minimiä $s_\text{opt}$ todennäköisyydellä 1 kun $t \to 0$.
+
+
+\subsection{Algoritmin malli Markovin ketjuina}
+\label{sub:algoritmin_malli_markovin_ketjuina}
+
+Algoritmin läpikäymiä tiloja $s$ ajanhetkillä $k = 1, \dots, n$ voidaan mallintaa sarjana homogeeneja Markovin ketjuja kullakin lämpötilaparametrin $t$ arvolla:
+
+Merkitään algoritmin hetkellä $k$ toteutunutta tilaa $\vect{X}(k)$,
+jolloin algoritmi on stokastinen prosessi $\vect{X}(1), \vect{X}(2), \dots, \vect{X}(n)$,
+jonka siirtymätodennäköisyydet hetkellä $k$
+\begin{equation}
+    \Pr\left\{\vect{X}(k+1) = j \mid \vect{X}(k) = i\right\}
+\end{equation}
+riippuvat Metropolis-kriteerin mukaisesti tiloista $i$ ja $j$ ja tuonhetkisestä lämpötilasta $t = t_k$.
+Jos lämpötila pysyy askeleiden $k, \dots, k + m$ ajan vakiona, $t_k, t_{k+1}, \dots, t_{k + m} = t_c$,
+tilat $\vect{X}(k), \dots, \vect{X}(k+m)$ muodostavat homogeenin äärellispituisen Markovin ketjun.
+
+Koska kullakin $t$:n arvolla Metropolis-kriteerin määräämät siirtymätodennäköisyydet säilyvät samoina,
+algoritmin Markov-ketjujen siirtymätodennäköisyydet voidaan esittää lämpötilaparametrista $t > 0$ riippuvan siirtymämatriisin $M(t)$ avulla,
+\begin{equation}
+    \label{eq:siirtymamatriisi_maar}
+    M_{ji}(t) =
+    \begin{cases}
+        G_{ji}(t)A_{ji}(t), & j \not= i \\
+        1 - \sum_{l\not =i} G_{li}(t)A_{li}(t), & j = i,
+    \end{cases}
+\end{equation}
+missä \emph{generointitodennäköisyys} $G_{ji}(t)$ ilmaisee todennäköisyyden että tilakonfiguraatio $s_j$ generoidaan lähtötilasta $s_i$, ja \emph{hyväksymistodennäköisyys} $A_{ji}(t)$ todennäköisyyden että lähtötilasta $s_i$ generoitu tila $s_j$ hyväksytään.
+
+Tässä tutkielmassa oletetaan että $G(t)$ on yksinkertaisesti (tasainen) satunnaisjakauma, jonka perusjoukko on lähtötilan $s_i$ naapuritilat $N(i)$,
+\begin{align}
+    G_{ji}(t) =& \frac{1}{m( N( i ) )}, \\
+    \intertext{missä $m$ on sopiva tn-mitta, diskreetissä tapauksessa naapureiden lukumäärä $\#N(j)$, jolloin
+    }
+    G_{ji}(t) =& \frac{1}{\#N( i )},
+\end{align}
+ja $A(t)$ on edellä jaksossa~\ref{sub:algoritmin_kuvaus_metropolis_kriteeri} kuvailtu Metropolis-kriteeri, joka voidaan kirjoittaa lyhyesti
+\begin{equation}
+    \label{eq:metropolis_kriteeri}
+    A_{ji}(t) = \min\left\{1, \exp\left(-\frac{\Delta E}{t}\right)\right\},
+\end{equation}
+kun huomataan että $\exp\left(-\frac{\Delta E}{t}\right) \geq 1$ kun $\Delta E \leq 0$.
+
+Algoritmiin liittyy myös jokin jäähdytysstrategia,
+johon sisältyy lämpötilaparametrin $t$ alkuarvo $t_0$,
+funktio $T: \Natural \to \R_+$ joka määrää sen arvot kullakin homogeenilla ketjulla $t_{k} = T(k)$,
+kunkin homogeenin Markov-ketjujen pituus $L_k$,
+ja algoritmin pysäytyskriteeri (tyypillisesti lämpötila $t_\text{stop}$ tai iteraatio $i_\text{stop}$, joka määrää ketjun tai hetken jolloin algoritmi pysähtyy).
+
+Yllä esitettyä SA:n muotoilua \textcite{laarhoven} kutsuvat \emph{homogeeniksi} algoritmiksi erotuksena epähomogeenista muotoilusta,
+jossa kontrolliparametrin $t$:n arvoa lasketaan jokaisen siirtymän jälkeen, jolloin Markov-ketjut eivät ole aikahomogeeneja.
+
+
+\section{Algoritmin teoreettinen perustelu}
+\label{sec:algoritmin_teoreettinen_perustelu}
+
+Perustellaan seuraavaksi hieman miksi jäähdytysalgoritmi toimii.
+SA on pohjimmiltaan sovellettu Metropolis-Hastings -algoritmi (tai lyhyesti Metropolis-algoritmi) joka tuottaa (pseudo-)satunnaisotoksen $s$ yleisestä Boltzmannin jakaumasta
+\begin{equation}
+    \Pr\left( s \right) \propto \exp \left(-\frac{E(s)}{t}\right).
+    \tag{Boltzmann}
+    \label{eq:boltzmann_yleinen}
+\end{equation}
+
+Tämän tutkielman piiriin ei kuulu asymptoottinen konvergenssitarkastelu kuinka Boltzmannin jakauman approksimointi vähenevillä lämpötiloilla johtaa globaaliin optimiin,
+vaan nojaamme vain tilastolliseen mekaniikkaan perustuvaan fysikaaliseen intuitioon.
+
+Esitetään kuitenkin tavanomainen todistus (\cite{chib95} mukaan) miksi alaluvussa~\ref{sec:algoritmin_matemaattinen_malli} kuvattu Metropolis(-Hastings) -algoritmi todella approksimoi haluttua jakaumaa (tässä Boltzmann-jakaumaa tietyssä lämpötilassa) tietyin Markov-ketjua koskevin oletuksin,
+ja lyhyt yhteenveto teoksessa \cite{laarhoven} esitetyistä laajemmista teoreettisista konvergenssituloksista.
+
+\subsection{Tilastollinen mekaniikka ja Boltzmannin jakauma}
+\label{sub:tilastollinen_mekaniikka}
+
+Tilastollisessa fysiikassa \emph{tilastollinen mekaniikka} tutkii tiiviin (kiinteän ja nestemäisen) aineen makroskooppista käyttäytymistä ja erityisesti termodynaamisia systeemeitä soveltamalla tilastollisia menetelmiä klassisen mekaanikan tai kvanttimekaniikan mukaisiin aineen mikroskooppisiin malleihin.
+Tilastollisessa mekaniikassa oletetaan että fyysisen systeemin makroskooppinen tila voidaan mallintaa todennäköisyysjakaumana sen mahdollisten mikroskooppisten tilojen (konfiguraatioiden) kokoelman yli.
+Aineen mikroskooppisella tilalla tarkoitetaan aineen kaikkien yksittäisen (tässä yhteydessä klassisen mekaniikan käsityksen mukaisten) hiukkasten tilaa.
+
+Jäähdytysmenetelmän tarkastelun kannalta tilastollisen mekaniikan keskeinen tulos on,
+että mikroskooppisilla tiloilla on lämpötilassa $t$ tasapainojakauma (termodynaaminen tasapainotila),
+joka voidaan johtaa \cite[ks. esim.][luku 5]{salamonetal} ja monissa malleissa (kun kvantti-ilmiöitä ei huomioida) on Boltzmannin jakauma~\ref{eq:boltzmann_mekaniikka}.
+Termodynaamisessa tasapainotilassa lämpötilassa $t$ systeemi on tilassa $s$ jonka sisäenergia on $E = E(s)$ todennäköisyydellä
+\begin{equation}
+    \label{eq:boltzmann_mekaniikka}
+    \Pr\left(s\right) = \frac{1}{Z(t)} \exp \left(-\frac{E(s)}{k_B t}\right),
+\end{equation}
+missä $k_B$ on Boltzmannin vakio, $t$ systeemin termodynaaminen lämpötila,
+ja jakofunktio $Z(t)$ on lämpötilasta riippuva normittava tekijä
+\begin{equation}
+    Z(t) = \sum_{i} \exp \left(-\frac{E(s_i)}{k_Bt}\right),
+\end{equation}
+missä summa otetaan mahdollisten energiatilojen $E(s_i)$ yli.
+
+Tilastollisen fysiikan tunnettu tulos on, että kun jäähdytysalgoritmin simuloimassa jäähdytysprosessissa $t \to 0$ tarpeeksi hitaasti,
+tutkittava systeemi on saavuttaa kaikissa läpikäymissään lämpötiloissa jakauman~\ref{eq:boltzmann_mekaniikka} kuvaaman termodynaamisen tasapainotilan.
+Lämpötilan $t$ laskiessa todennäköisyysjakauma~\ref{eq:boltzmann_mekaniikka} keskittyy pienienergisten tilojen $s$ ympärille,
+ja kun lämpötila lähestyy nollaa, vain energioiltaan pienimpien tilojen todennäköisyys on positiivinen.
+Toisin sanoen kun $t$ lähestyy nollaa, systeemi saavuttaa matalaenergisimmän perustilansa (engl. \emph{low energy ground state}),
+jossa aineen hiukkaset kristalloituvat hilarakenteeseen.
+
+Kuten edellä (jakso~\ref{sub:algoritmin_kuvaus_metropolis_kriteeri}) on kuvailtu,
+mallinnetussa jäähdytyksessä optimointiongelman mahdolliset ratkaisut $s_i \in \Omega$ vertautuvat fysikaalisen systeemin tiloihin,
+joiden energiatilat antaa optimoitava funktio $E$.
+Vastaavasti jäähdytysalgoritmin tilojen tulkitaan kullakin lämpötilaparametrin $t$ arvolla noudattavan Boltzmann-muotoista jakaumaa
+\begin{equation}
+    \label{eq:boltzmann_sa}
+    \vect{\pi}_t(i) = \frac{1}{Q(t)} \exp \left(-\frac{E(s_i)}{t}\right),
+\end{equation}
+missä $Q(t)$ on fysikaalista jakofunktiota vastaava normittava tekijä
+\begin{equation}
+    Q(t) = \sum_{s \in \Omega} \exp \left(-\frac{E(s)}{t}\right).
+\end{equation}
+
+Mallinnettussa jäähdytyksessä fysikaalista prosessia simuloidaan Metropolis-algoritmilla,
+joka approksimoi yhtälön~\ref{eq:boltzmann_sa} muotoista Boltzmannin jakaumaa.
+
+Todellisuudessa monet kombinatoriset ongelmat joihin jäähdytysalgoritmia sovelletaan eivät kuitenkaan aina käyttäydy kuin tyypilliset termodynaamiset systeemit.
+Tällaisissa tilanteissa algoritmin käyttäytymistä usein verrataan lasin kaltaisiin systeemeihin (\emph{glassy systems}).
+Kyseisen kaltaisen aineen rakenne jää epäoptimaaliseen järjestykseen kun sen lämpötila laskee aineen nk. neste-lasi -transitiolämpötilan alapuolelle:
+sanotaan että systeemi käy läpi neste-lasitransition.
+\cite[][luku 6.6]{salamonetal}
+
+\subsection{Algoritmin tasapainojakauma ja Metropolis-Hastings -algoritmi}
+\label{sub:metropolis_hastings_algoritmi}
+
+Lauseen \ref{lause:ketjun_stat_jakauma} mukaan ergodisella ja aperiodisella Markovin ketjulla on olemassa jokin stationaarinen jakauma $\vect{\pi}$.
+Määritelmän~\ref{maar:ergodisuus} mukaan ergodisessa Markovin ketjussa jokainen tila on saavutettavissa mistä tahansa toisesa tilasta äärellisessä ajassa.
+Sopivasti toteutetussa jäähdytysalgoritmissa oletus vaikuttaa mielekkäältä.
+SA-algoritmi voidaan myös olettaa aperiodiseksi:
+missä tahansa algoritmin tilassa (joka ei ole paikallinen maksimi) Metropolis-kriteerin johdosta
+algoritmilla on positiivinen todennäköisyys hylätä generoitu siirtymä ja säilyttää edellinen tila.
+Näin ollen algoritmilla on kaikissa lämpötiloissa $t$ tiloja joilla $M_{ii}(t) > 0$,
+ja lauseen~\ref{lau:aperiodisuus} mukaan algoritmin ketjut ovat aperiodisia.
+
+Näin ollen on perusteltua olettaa että järkevästi toteutettu SA-algoritmi konvergoi kohti jotain tasapainojakaumaa.
+Edellisessä alaluvussa perusteltiin algoritmin kykyä löytää globaali optimi
+tilastolliseen fysiikkaan perustuvan intuition kautta,
+minkä kannalta oleellista on että mallinnettu jäähdytys approksimoi nimenomaisesti Boltzmannin jakaumaa~\ref{eq:boltzmann_sa}.
+
+Mallinnettu jäähdytys on erikoistapaus yleisestä Metropolis-Hastings -algo\-rit\-mista.
+Metropolis-Hastings on suosittu Markovin ketjujen Monte Carlo -menetelmä (engl. \emph{Markov Chain Monte Carlo}, lyhyesti MCMC)  jonkin halutun todennäköisyysjakauman $\vect{\pi}(x)$ approksimointiin,
+ja erityisen hyödyllinen kun todennäköisyysjakaumasta $\vect{\pi}(x)$ on vaikea generoida satunnaisotantaa, mutta tunnetaan funktio $f$, jolle pätee
+\begin{equation}
+    \frac{\pi(x')}{\pi(x)} = \frac{f(x')}{f(x)}.
+\end{equation}
+
+Osoitetaan että mallinnetun jäähdytyksen tasapainojakauma on Boltzmannin jakauma johtamalla yleinen Metropolis-Hastings -algoritmi,
+jonka tasapainojakauma on $\vect{\pi}(x)$.
+Toisin sanoen oletetaan, että $\vect{\pi}(x)$ on määritelmän~\ref{maar:stationaarinen} mukainen vektori ja erityisesti halutaan, että siirtymämatriisin $M$ määräämälle Markovin ketjulle pätee määritelmän~\ref{maar:stationaarinen} kolmas ehto
+\begin{equation}
+    \vect{\pi}(i) = \sum_j \vect{\pi}(j) M_{i,j}.
+\end{equation}
+
+Oletetaan, että etsittävän Metropolis-algoritmin Markovin ketju toteuttaa täydellisen tasapaino- eli kääntyvyysominaisuuden
+\begin{align}
+    \label{eq:tasapainoehto}
+    \vect{\pi}(j) M_{i,j} &= \vect{\pi}(i) M_{j,i}.
+\end{align}
+Nähdään, että tasapainojakauman määritelmän~\ref{maar:stationaarinen} kolmas ehto seuraa kääntyvyydestä:
+\begin{equation}
+    \sum_j \vect{\pi}(j) M_{i,j} = \sum_j \vect{\pi}(i) M_{j,i}
+                                 = \vect{\pi}(i) \sum_j M_{j,i}
+                                 = \vect{\pi}(i), \label{eq:station_johto}
+\end{equation}
+missä viimeinen askel pätee sillä luonnollisesti $\sum_j M_{j,i} = \sum_j \Pr\{ \vect{X}(k+1) = j \mid \vect{X}(k) = i \} = 1$ kaikilla $i$.
+
+Johdetaan nyt yleinen Metropolis-algoritmi etsimällä Markov-ketju joka toteuttaa kääntyvyysominaisuuden~\ref{eq:tasapainoehto},
+jolloin sillä on haluttu stationaarinen jakauma~$\vect{\pi}$.
+
+Kirjoitetaan $M_{i,j} = \Pr\{\vect{X}(k+1) = i \mid \vect{X}(k) = j\}$ generointi- ja hyväksymistodennäköisyyksien $G_{i,j}$ ja $A_{i,j}$ avulla
+\begin{equation*}
+    M_{i,j} = G_{i,j}A_{i,j}, \quad i \not = j.
+\end{equation*}
+Sijoitetaan tämä yhtälöön~\eqref{eq:tasapainoehto}, jolloin saadaan
+\begin{align}
+    \vect{\pi}(j) G_{i,j}A_{i,j} &= \vect{\pi}(i) G_{j,i}A_{j,i}
+\end{align}
+Oletetaan että myös generointitodennäköisyydet toteuttavat kääntyvyysehdon $G_{i,j} = G_{j,i}$,
+mikä SA:n tapauksessa on useimmiten järkevä oletus.
+Tällöin yhtälöksi tulee
+\begin{equation}
+    \label{eq:supist_tasap}
+    \vect{\pi}(j) A_{i,j} = \vect{\pi}(i) A_{j,i}
+\end{equation}
+On vielä valittava hyväksymistodennäköisyyksille $A_{i,j}$ sellainen todennäkoisyysjakauma että tämä pätee kaikilla $i,j$.
+
+Oletetaan että tilat $i,j$ ovat sellaiset, että
+\begin{equation}
+    \label{eq:todn_jarj}
+    \vect{\pi}(j) < \vect{\pi}(i).
+\end{equation}
+Toisin sanoen todennäköisyys että olemme tilassa $i$ on suurempi kuin tilassa $j$.
+Koska oletuksen mukaan $G_{i,j} = G_{j,i}$,
+tasapainoehdon~\eqref{eq:supist_tasap} säilymiseksi hyväksymistodennäköisyyden $A_{i,j}$ siirtymälle $j \to i$  on oltava suurempi kuin hyväksymistodennäköisyyden $A_{j,i}$ siirtymälle $i \to j$,
+eli on oltava $A_{j,i} < A_{i,j}$.
+Toisaalta todennäköisyytenä $A_{i,j}$ ei voi olla suurempi kuin $1$;
+\emph{valitaan} se mahdollisimman suureksi $A_{i,j} = 1$,
+eli mikäli tehdään siirtymä tilasta $j$ tilaan $i$ joka on todennäköisempi kuin $j$~\eqref{eq:todn_jarj},
+se hyväksytään automaattisesti.
+
+Ehdosta $A_{i,j}$ ja yhtälöstä~\eqref{eq:supist_tasap} saadaan kaava hyväksymistodennäköisyydelle $A_{j,i}$,
+\begin{equation}
+    A_{j,i} = \frac{\vect{\pi}(j)}{\vect{\pi}(i)}.
+\end{equation}
+Vastaavat yhtälöt luonnollisesti pätevät mikäli $\vect{\pi}(j) > \vect{\pi}(i)$.
+
+Hyväksymimistodennäköisyydelle $A_{i,j}$ on siis näin johdettu kaava kun $i\not=j$,
+\begin{equation}
+    \label{eq:yleinen_metropolis}
+    A_{i,j} = \min\left\{1, \frac{\vect{\pi}(i)}{\vect{\pi}(j)}\right\}.
+\end{equation}
+Algoritmin~\ref{eq:siirtymamatriisi_maar} johto on valmis, kun vielä asetamme tapauksessa $i=j$
+\begin{equation}
+    M_{i,j} = M_{i,i} =  1 - \sum_{l\not =j} G_{l,j}A_{l,j}.
+\end{equation}
+
+Kuten edellä (alaluku~\ref{sub:tilastollinen_mekaniikka}) perusteltiin, SA-algoritmissa approksimoitava jakauma \vect{\pi} on  kullakin $t$:n arvolla Boltzmannin jakauma~\ref{eq:boltzmann_sa}
+\begin{equation}
+    \vect{\pi} = \vect{\pi}_t(i) = \frac{1}{Q(t)} \exp \left(-\frac{E(s_i)}{t}\right).
+\end{equation}
+Koska
+\begin{equation}
+    \frac{\vect{\pi}(j)}{\vect{\pi}(i)} = \frac{\vect{\pi}_t(j)}{\vect{\pi}_t(i)} = \exp \left(\frac{E(s_i) - E(s_j)}{t}\right),
+\end{equation}
+yhtälö~\ref{eq:yleinen_metropolis} saa tällä jakaumalla muodon
+\begin{equation}
+    \label{eq:boltzmann_metropolis}
+    A_{j,i} = \min\left\{1, \frac{\vect{\pi}(j)}{\vect{\pi}(i)}\right\} = \min\left\{1, \exp \left(-\frac{\Delta E}{t}\right)\right\}, \quad \text{missä } \Delta E = \Delta E_{j,i} = E(s_j) - E(s_i),
+\end{equation}
+mikä on juuri haluttu Metropolis-kriteeri~\ref{eq:metropolis_kriteeri}.
+
+Lauseen  \ref{lause:stat_jakauman_konvergenssi} mukaan Metropolis-algoritmi konvergoi kohti stationaarista jakaumaa $\vect{\pi}$ todennäköisyydellä 1 kun Markov-ketjujen pituudet kasvavat rajatta kullakin $t$.
+
+\subsection{Konvergenssituloksia}
+\label{sub:Konvergenssituloksia}
+
+Yllä oletettiin että ketju toteuttaa täydellisen (myös paikallisen) tasapainoehdon (engl. \emph{detailed balance})~\eqref{eq:tasapainoehto}.
+Esimerkiksi \citeauthor{laarhoven} esittävät kirjallisuudessa tunnettuja todistuksia \cite[Luvut 3.1.2, 3.1.3]{laarhoven},
+joissa Markovin ketjuja koskevat oletukset voivat olla lievempiä (paikallisen tasapainon sijaan riittää olettaa esimerkiksi nk. \emph{globaali} tasapainoehto)
+ja samalla osoitetaan, että algoritmi konvergoi asymptoottisesti kohti globaalia optimia $s_\text{opt}$ tai (jos minimi ei ole yksikäsittäinen) globaalin minimin antavien konfiguraatioiden joukon $S_\text{opt}$ (tasa-)jakaumaa kun $t \to 0$,
+eli
+\begin{equation}
+    \lim_{t \to 0} \left(\lim_{k \to \infty}\Pr\left\{\vect{X}(k) \in S_\text{opt}\right\} \right) = 1.
+\end{equation}
+
+Lisäksi voidaan osoittaa~\parencite[Luku 3.2]{laarhoven} että kun Markov-ketjujen pituus kullakin $t$ on yksi  tai yleisemmin äärellinen (epähomogeeni algoritmi),
+algoritmi silti konvergoi kohti optimia kunhan $t \to 0$ riittävän hitaasti,
+missä 'riittävän hitaasti' tarkoittaa ehtoa muotoa
+\begin{equation}
+    \label{eq:jaahtymisehto}
+    t_{n} = \frac{\Gamma}{\log(n)}.
+\end{equation}
+Vakiolle $\Gamma$ tunnetaan erilaisia rajoja $\Gamma \geq d$,
+jossa $d$ on ongelman rakenteesta riippuva parametri~\cite[38]{laarhoven}.
+Mielenkiintoinen SA:n ominaisuus on että myös ehtoa~\ref{eq:jaahtymisehto} nopeammat jäähdytysstrategiat toimivat usein hyvin,
+vaikkei niille ole yhtä varmaa teoreettista perustelua.
+
