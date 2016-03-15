@@ -182,7 +182,7 @@ Näin jäähdytettävä aine kristalloituu matalaenergisimpään perustilaansa,
 ja partikkelit muodostavat säännöllisen, virheettömän rakenteen.
 ~\cite{kirkpatrick83, laarhoven}
 Optimointiongelman kohdefunktion arvot samastetaan jäähdytettävän kappaleen muodostaman fysikaalisen systeemin energiatiloihin.
-Algoritmissa systeemin kuhunkin lämpötilaansa liittyvän tasapainotilan (engl. \emph{thermal equilibrium}) lähestymistä simuloidaan Metropolis-Hastings -algoritmilla.
+Algoritmissa systeemin kuhunkin lämpötilaansa liittyvän tasapainotilan (engl. \emph{thermal equilibrium}) lähestymistä simuloidaan Metropolis--Hastings-algoritmilla.
 ~\cite{kirkpatrick83, salamonetal}
 
 \subsection{Algoritmin kuvaus: Metropolis-kriteeri}
@@ -275,7 +275,7 @@ jossa kontrolliparametrin $t$:n arvoa lasketaan jokaisen siirtymän jälkeen, jo
 \label{sec:algoritmin_teoreettinen_perustelu}
 
 Perustellaan seuraavaksi hieman miksi jäähdytysalgoritmi toimii.
-SA on pohjimmiltaan sovellettu Metropolis-Hastings -algoritmi (tai lyhyesti Metropolis-algoritmi) joka tuottaa (pseudo-)satunnaisotoksen $s$ yleisestä Boltzmannin jakaumasta
+SA on pohjimmiltaan sovellettu Metropolis--Hastings-algoritmi (tai lyhyesti Metropolis-algoritmi) joka tuottaa (pseudo-)satunnaisotoksen $s$ yleisestä Boltzmannin jakaumasta
 \begin{equation}
     \Pr\left( s \right) \propto \exp \left(-\frac{E(s)}{t}\right).
     \tag{Boltzmann}
@@ -285,7 +285,7 @@ SA on pohjimmiltaan sovellettu Metropolis-Hastings -algoritmi (tai lyhyesti Metr
 Tämän tutkielman piiriin ei kuulu asymptoottinen konvergenssitarkastelu kuinka Boltzmannin jakauman approksimointi vähenevillä lämpötiloilla johtaa globaaliin optimiin,
 vaan nojaamme vain tilastolliseen mekaniikkaan perustuvaan fysikaaliseen intuitioon.
 
-Esitetään kuitenkin tavanomainen todistus (\cite{chib95} mukaan) miksi alaluvussa~\ref{sec:algoritmin_matemaattinen_malli} kuvattu Metropolis(-Hastings) -algoritmi todella approksimoi haluttua jakaumaa (tässä Boltzmann-jakaumaa tietyssä lämpötilassa) tietyin Markov-ketjua koskevin oletuksin,
+Esitetään kuitenkin tavanomainen todistus (\cite{chib95} mukaan) miksi alaluvussa~\ref{sec:algoritmin_matemaattinen_malli} kuvattu Metropolis--Hastings-algoritmi todella approksimoi haluttua jakaumaa (tässä Boltzmann-jakaumaa tietyssä lämpötilassa) tietyin Markov-ketjua koskevin oletuksin,
 ja lyhyt yhteenveto teoksessa \cite{laarhoven} esitetyistä laajemmista teoreettisista konvergenssituloksista.
 
 \subsection{Tilastollinen mekaniikka ja Boltzmannin jakauma}
@@ -339,7 +339,7 @@ Kyseisen kaltaisen aineen rakenne jää epäoptimaaliseen järjestykseen kun sen
 sanotaan että systeemi käy läpi neste-lasitransition.
 \cite[][luku 6.6]{salamonetal}
 
-\subsection{Algoritmin tasapainojakauma ja Metropolis-Hastings -algoritmi}
+\subsection{Algoritmin tasapainojakauma ja Metropolis--Hastings-algoritmi}
 \label{sub:metropolis_hastings_algoritmi}
 
 Lauseen \ref{lause:ketjun_stat_jakauma} mukaan ergodisella ja aperiodisella Markovin ketjulla on olemassa jokin stationaarinen jakauma $\vect{\pi}$.
@@ -356,14 +356,14 @@ Edellisessä alaluvussa perusteltiin algoritmin kykyä löytää globaali optimi
 tilastolliseen fysiikkaan perustuvan intuition kautta,
 minkä kannalta oleellista on että mallinnettu jäähdytys approksimoi nimenomaisesti Boltzmannin jakaumaa~\ref{eq:boltzmann_sa}.
 
-Mallinnettu jäähdytys on erikoistapaus yleisestä Metropolis-Hastings -algo\-rit\-mista.
-Metropolis-Hastings on suosittu Markovin ketjujen Monte Carlo -menetelmä (engl. \emph{Markov Chain Monte Carlo}, lyhyesti MCMC)  jonkin halutun todennäköisyysjakauman $\vect{\pi}(x)$ approksimointiin,
+Mallinnettu jäähdytys on erikoistapaus yleisestä Metropolis--Hastings-algo\-rit\-mista.
+Metropolis--Hastings on suosittu Markovin ketjujen Monte Carlo -menetelmä (engl. \emph{Markov Chain Monte Carlo}, lyhyesti MCMC)  jonkin halutun todennäköisyysjakauman $\vect{\pi}(x)$ approksimointiin,
 ja erityisen hyödyllinen kun todennäköisyysjakaumasta $\vect{\pi}(x)$ on vaikea generoida satunnaisotantaa, mutta tunnetaan funktio $f$, jolle pätee
 \begin{equation}
     \frac{\pi(x')}{\pi(x)} = \frac{f(x')}{f(x)}.
 \end{equation}
 
-Osoitetaan että mallinnetun jäähdytyksen tasapainojakauma on Boltzmannin jakauma johtamalla yleinen Metropolis-Hastings -algoritmi,
+Osoitetaan että mallinnetun jäähdytyksen tasapainojakauma on Boltzmannin jakauma johtamalla yleinen Metropolis--Hastings-algoritmi,
 jonka tasapainojakauma on $\vect{\pi}(x)$.
 Toisin sanoen oletetaan, että $\vect{\pi}(x)$ on määritelmän~\ref{maar:stationaarinen} mukainen vektori ja erityisesti halutaan, että siirtymämatriisin $M$ määräämälle Markovin ketjulle pätee määritelmän~\ref{maar:stationaarinen} kolmas ehto
 \begin{equation}
