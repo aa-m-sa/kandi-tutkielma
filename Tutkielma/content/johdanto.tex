@@ -6,18 +6,19 @@
 Tämä soveltavan matematiikan kandidaatintutkielma käsittelee matemaattisen optimoinnin menetelmää nimeltä mallinnettu jäähdytys ja sen soveltamista digitaalisen kuvankäsittelyn ja keinonäön ongelmaan: ympyräkiekkojen etsimiseen sumeasta ja kohinaisesta kuvasta.
 Kuvaongelman muotoilun yhteydessä esitellään myös digitaalisen kuvankäsittelyn perusteita.
 
-Mallinnettu jäähdytys (engl. \emph{simulated annealing}, suomeksi myös \emph{jäähdytysmenetelmä} tai \emph{simuloitu jäähdytys} \cite[suomennokset ks.][]{haataja93}, myöhemmin lyhyesti SA tai SA-algoritmi) on tunnettu probabilistinen optimointialgoritmi (terminologiasta riippuen myös optimointiheurestiikka tai metaheurestiikka) globaalin, tavallisesti diskreetin tai kombinatorisen optimointitehtävän ratkaisemiseksi.
+Mallinnettu jäähdytys (engl. \emph{simulated annealing}, suomeksi myös \emph{jäähdytysmenetelmä} tai \emph{simuloitu jäähdytys} \cite[suomennokset ks.][]{haataja93}, myöhemmin lyhyesti SA tai SA-algoritmi) on tunnettu probabilistinen optimointialgoritmi globaalin, tavallisesti diskreetin tai kombinatorisen optimointitehtävän ratkaisemiseksi.
+(Käytettävästä terminologiasta riippuen sitä voidaan nimittää myös optimointiheurestiikaksi tai metaheurestiikaksi, sillä metodina se on yleinen.)
 Jäähdytysalgoritmin esittelivät \citeauthor*{kirkpatrick83} 1983 artikkelissa \cite{kirkpatrick83} Metropolis--Hastings-algoritmin sovelluksena erilaisiin kombinatorisiin optimointiongelmiin, kuten kuuluisaan kauppamatkustajan ongelmaan.
 Metropolis-algoritmi vuorostaan on klassinen Markovin ketjujen Monte Carlo -menetelmä, jonka juuret ovat jäähtyvän fysikaalisen systeemin simuloinnissa.
 Mallinnettu jäähdytys on yksinkertainen ja monikäyttöinen heurestiikka,
 jonka hyödyllinen ominaisuus on sen kyky kiivetä ylös energiafunktion paikallisten minimien ''energiamaisemaan'' aiheuttamista kuopista~\cite{salamonetal}.
 
-SA:lla on myös mielenkiintoisia yhtymäkohtia kvanttilaskentaan.
+Sivuhuomiona mainittakoon että SA:lla on myös mielenkiintoisia ajankohtaisia yhtymäkohtia kvanttilaskentaan.
 Metodin lähisukulainen nk. kvanttijäähdytys (\emph{quantum annealing}) perustuu siihen että monia kombinatorisia optimointiongelmia,
 kuten verkon kahtiajako-ongelma, voidaan esittää spin-lasien Ising-mallin matalaenergisimpien tilojen etsintänä samaan tapaan kuin SA mallintaa termodynaamisen systeemin matalaenergisten tilojen löytämistä \cites[luku 4.5]{laarhoven}[]{johnson11dwave}.
 Kvanttijäähdytysalgoritmi on väitetysti tehokas optimointimenetelmä, jos käytettävissä on sopivasti konstruoitu Ising-spin-systeemiä mallintava kvanttitietokone,
 tai ainakin D-Wave Systems, Inc., esittää kykenevänsä huomattavaan laskentanopeuden parannukseen tällaisella laitteella \cite{johnson11dwave, denchev2015},
-mutta nopeushypyn merkittävyydestä ei ole vielä selvyyttä \cite{troyer2015}.
+mutta nopeushypyn merkittävyydestä ei ole selvyyttä \cite{troyer2015}.
 
 Tutkielmassa mallinnettuun jäähdytykseen tutustutaan soveltamalla sitä yksinkertaiseen kuvankäsittelyongelmaan,
 jossa tehtävänä on tunnistaa tunnettu määrä $k$ tummia ympyräkiekkoja sumentuneesta ja kohinaisesta vaaleataustaisesta kuvasta.
@@ -29,8 +30,8 @@ Energiafunktiota minimoimalla voidaan etsiä parametrit, jotka määräävät ku
 
 Tutkielman pääpainopiste on mallinnetussa jäähdytyksessä ja sen käyttäytymisen tutkimisessa kuvatussa esimerkkiongelmassa.
 Esitetty ympyräongelma ja valittu kuvamalli on reaalimaailman sovelluksia ajatellen varsin rajoitettu,
-ja käytännön kuvankäsittelysovelluksissa vastaavat ongelmat ovat usein monella tapaa vaikeampia:
-häiriölähteitä on enemmän ja kuvan kohteista ei voi muodostaa yhtä yksinkertaista mallia.
+sillä käytännön kuvankäsittelysovelluksissa vastaavat ongelmat ovat usein monella tapaa vaikeampia:
+häiriölähteitä on enemmän ja kuvan kohteista ei aina voi muodostaa yhtä yksinkertaista mallia.
 
 Ympyräobjektien tunnistaminen kuvasta on perinteinen konenäön alan ongelma,
 jota voitaisiin lähestyä myös monella muulla tapaa:
@@ -42,10 +43,10 @@ Mikäli kuvadata on huomattavan sumeaa, alkuperäisen sumentumattoman kuvan pint
 Ylipäätään sumeiden kuvien tarkentaminen (\emph{deblurring}) on myös laajalti tutkittu kuvankäsittelyn ongelma,
 ja tyypillinen esimerkki epätriviaalista inversio-ongelmasta~\cite{muellersiltanen12}.
 Sumennosta usein mallinnetaan konvoluutio-operaationa, jonka \emph{dekonvoluutioon} voidaan käyttää (riippuen kuinka hyvin konvoluution pistehajontafunktio tunnetaan) esimerkiksi regu\-la\-ri\-sointi- \cite{muellersiltanen12}, Wiener-suodatin-, tai tilastollisia (Bayes) menetelmiä~\cite{chaudhuri14}.
-Tässä tutkielmassa sumentuneen kuvadatan ongelmaa lähestytään naiivisti olettamalla että käytössä on \emph{a priori} -informaatiota (tai hyvä arvaus) kuvaa sumentaneesta prosessista, mitä hyödynnetään optimointimallissa.
+Tässä tutkielmassa sumentuneen kuvadatan ongelmaa lähestytään naiivisti olettamalla että käytössä on \emph{a priori} -informaatiota (tai muuten hyvä arvaus) kuvaa sumentaneesta prosessista, mitä hyödynnetään optimointimallissa.
 (Vastakohtaisesti vaikeammassa nk. sokeassa dekonvoluutiossa tällaisia oletuksia ei tehdä,~\cite[ks. esim][]{chaudhuri14})
 
-Numeeriseen laskentaan käytettiin Matlab-ohjelmistoa~\cite{matlab2014a} ja tulosten analysointiin sekä kuvaajien tuottamiseen myös SciPy-ohjelmistoa~\cite{jones01scipy} ja sen Matplotlib-pakettia~\cite{hunter07matplotlib}.
+Tutkielman kokeellisen osuuden numeeriseen laskentaan käytettiin Matlab-ohjelmistoa~\cite{matlab2014a} ja tulosten analysointiin sekä kuvaajien tuottamiseen myös SciPy-ohjelmistoa~\cite{jones01scipy} ja sen Matplotlib-pakettia~\cite{hunter07matplotlib}.
 
 Tutkielman rakenne on seuraava:
 Luvussa~\customref{cha:simulated_annealing_algoritmi} lyhyesti todetaan joitain Markovin ketjuja koskevia esitietoja,
