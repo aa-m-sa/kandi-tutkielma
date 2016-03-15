@@ -52,13 +52,13 @@ vaan erityisesti nopeilla strategioilla huomattavan moni kulkija voi 'jäähtyä
 (Havainnollistava kuva~\ref{fig:A_modalbin_cc_fast_1}, vastaavia piikkejä myös \ref{fig:set3_histo_compare_2_099_090}.)
 
 Toisaalta kuitenkin vastapainona nopealle jäähdytysstrategialla kulkijakokoelman kokoa kasvattamalla todennäköisyyttä että nopeakin jäähdytys löytää hyvän tuloksen (kuva~\ref{fig:set2_best_final_e_walkers}).
-Optimaalisen tasapainon löytäminen jäähdytysskenaarion pituuden ja kulkijakokoelman koon välillä, ja etenkin sen dynaaminen arvioiminen ongelmanratkaisun aikana on eräs menetelmä jäähdytysmenetelmän kaltaisten algoritmien nopeuttamiseksi \cite{salamonetal}.
+Yleisesti jäähdytysmenetelmän kaltaisten algoritmien tehokkaassa soveltamisessa numeerisesti raskaissa ongelmissa usein onkin hyödyllistä yrittää löytää optimaalinen suhde jäähdytysskenaarion pituuden ja kulkijakokoelman koon välillä, ja etenkin sen dynaaminen arvioiminen ongelmanratkaisun aikana \cite{salamonetal}.
 
 \subsection{Ulottuvuuskirous}
 \label{sub:ulottuvuuskirous}
 
 Kiekkojen lukumäärän kasvaessa yhdellä ongelman optimoitavien parametrien avaruuden ulottuvuus kasvaa kolmella.
-Tunnetusti optimointiongelmissa tämä avaruuden koon kasvu vaikeuttaa optimoiniongelmia, ja tästä syystä myös kiekkojen määrä oletettiin tunnetuksi vakioksi.
+Tunnetusti optimointiongelmissa tämä avaruuden koon kasvu vaikeuttaa optimointiongelmia, ja tästä syystä kiekkojen määrä oletettiin tunnetuksi vakioksi.
 Näin ollen vielä tutkielman pienillä kiekkomäärillä $k = 1, \dots, 5$ ulottuvuuksien kasvu ei näyttänyt olevan jäähdytysalgoritmille suuri ongelma.
 
 \section{Yhteenveto ja pohdinta}
@@ -89,10 +89,10 @@ ja sitten soveltaa tässä esitettyä SA-algoritmia.
 (Kappaleiden laskemista kuvassa voidaan myös lähestyä yleisenä ongelmana koneoppimisen menetelmin, kuten esimerkiksi \cite{lempitskyzissermanNIPS10}.)
 
 Toisaalta myös erilliset ympyrät ovat myös melko rajoittunut malli monimutkaisempien muotojen mallintamiseen.
-Tällaisten vaikeuksien vuoksi konenäön alalla muotojen mallintamisessa  tässä tutkielmassa käytetyn kaltaisten geometristen mallia sijasta suositumpia ovat erilaisiin merkitsiviin pisteisiin perustuvat mallit (esimerkiksi \emph{active contour model, snakes} \cite{prince2012}).
+Tällaisten vaikeuksien vuoksi konenäön alalla muotojen mallintamisessa  tässä tutkielmassa käytetyn kaltaisten geometristen mallia sijasta suositumpia ovat erilaisiin merkitseviin pisteisiin perustuvat mallit (esimerkiksi \emph{active contour model, snakes} \cite{prince2012}).
 
 Yhteenvetona, yleisesti reaalimaailman dekonvoluutiosovelluksia ajatellen tässä tutkielmassa käsitelty ongelma on rajoittunut.
 Usein tutkittavan kuvan rakenteesta ei voida tehdä näin yleisiä ja joudutaan käyttämään paljon yleisempiä malleja.
-Mutta ''oikeiden'' konenäön ongelmien ratkaisussa käytetään yleisellä tasolla samankaltaisia metodeja:
+Mutta ''oikeiden'' konenäön ongelmien ratkaisemiseen käytetään yleisellä tasolla hyvin samankaltaisia metodeja:
 Sumennosta kuitenkin mallinnetaan konvoluutio-operaationa,
 ja ratkaisun lähtökohtana on usein muodostetaan jokin sopiva energiafunktio, jota optimoidaan.
