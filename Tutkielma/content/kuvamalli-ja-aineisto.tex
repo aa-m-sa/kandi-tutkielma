@@ -8,7 +8,7 @@ Digitaalisessa kuvankäsittelyssä kuvan ja erityisesti valokuvan tapaisen kuvad
 Esitysmuotoa kutsutaan \emph{rasterikuvaksi} tai \emph{bittikarttakuvaksi}.
 \footnote{Mainittakoon, että on myös olemassa vektorigrafiikkaa, jossa kuva esitetään geometristen objektien (kuten polkujen) avulla.
 Jatkossa 'kuvalla' ja 'kuvadatalla' tarkoitetaan rasteri- / bittikarttakuvaa.}
-Harmaasävykuvassa (engl. \emph{greyscale image}) kullakin pikselillä on numeriinen arvo, joka kertoo kattaman kuvapinnan alueen keskimääräisen valoisuuden eli intensiteetin.
+Harmaasävykuvassa (engl. \emph{greyscale image}) kullakin pikselillä on numeerinen arvo, joka kertoo pikselin kattaman kuvapinnan alueen keskimääräisen valoisuuden eli intensiteetin.
 Tästä nimi ''bittikartta'':
 yleisissä tietokoneohjelmistojen käyttämissä tallennusmuodoissa pikselin valoisuus ilmaistaan 8-bittisellä kokonaisluvulla väliltä $0$ ja $2^8 -1 = 255$ (binäärinä $0_2$ ja $1111111_2$).
 Vuorostaan RGB-värikuvassa pikseliin liittyy väri-informaation antava RGB-arvo (kolme erillistä 8-bittistä kanavaa punaiselle, vihreälle ja siniselle).
@@ -25,7 +25,7 @@ Matriisin koordinaateissa $(i,j)$ sijaitsevaa pikseliä merkitään $A(i,j)$.
 
 Vaikka matemaattisissa malleissa kuvamatriisin alkiot käsitetään reaaliluvuiksi, tietokone laskee diskreetissä lukuavaruudessa.
 %\cite[35--37]{jähne}
-Jäljempänä esiteltävän algoritmin käytännön toteutuksessa (Matlab) laskenta tapahtuu liukulukumatriiseilla, jotka esitetään yllä kuvaillun kaltaisina pikselikuvina.
+Tässä tutkielmassa esitellyn algoritmin käytännön Matlab-toteutuksessa laskenta tapahtuu liukulukumatriiseilla, jotka esitetään yllä kuvaillun kaltaisina pikselikuvina.
 Vaikka liukulukulaskenta pystyy mallintamaan reaalilukuja vain tiettyyn tarkkuuteen asti,
 ovat siitä aiheutuvat virheet niin pieniä ettei niitä tarvitse tämän tutkielman piirissä huomioida tarkemmin.
 
@@ -290,7 +290,7 @@ jolloin simuloituun aineistoon $A_{\text{data}}$ voidaan käyttää periaatteelt
     \label{eq:aineistomalli}
     A_{\text{data}} = P_{\text{data}} \ast A_W + E,
 \end{equation}
-missä datan luomiseen käytetty sumentava suodatin on hieman erilainen kuin havaintomallissa odotetaan.
+missä datan luomiseen käytetty sumentava suodatin on kuitenkin hieman erilainen kuin havaintomallissa odotetaan.
 
 Kuvittelememme siis että tutkimme yleisen mallin~\ref{eq:kuvamalli} mukaista prosessia,
 jonka ''todelliset parametrit'' (konvoluutiomatriisi) ovat mallin \ref{eq:aineistomalli} mukaiset.
