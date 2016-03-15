@@ -4,7 +4,7 @@
 \section{Optimointi}
 \label{sec:optimointi}
 
-Yleisesti matemaattisissa optimointiongelmissa (optimointitehtävässä) tavoitteena on löytää annetun ongelman jossain mielessä paras ratkaisu tietystä mahdollisten ratkaisujen joukosta.
+Yleisesti matemaattisissa optimointiongelmissa (eli optimointitehtävässä) tavoitteena on löytää annetun ongelman jossain mielessä paras ratkaisu tietystä mahdollisten ratkaisujen joukosta.
 Ratkaisuehdokkaan hyvyyttä kuvaa ratkaisuehdokkaiden avaruudessa $\Omega$ määritelty reaaliarvoinen funktio~$E$ (hintafunktio, kohdefunktio),
 ja optimointiongelman ratkaisu on avaruuden piste jossa $E$ saavuttaa minimin.
 Ongelmasta riippuen halutaan löytää paikallinen (lokaali) tai globaali minimipiste.
@@ -30,23 +30,25 @@ voidaan optimointiongelma määritellä minimoinnin kautta.)
 \end{maar}
 
 \begin{merk}
-    Koska tila-avaruus $\Omega$ on diskreetti ja useimmissa sovelluksissa,
+    Koska tila-avaruus $\Omega$ on diskreetti ja useimmissa sovelluksissa (erityisesti tässä tutkielmassa),
     kuten kombinatorisissa optimointitehtävissä, lisäksi äärellinen (tai korkeintaan numeroituva),
     tiloja voidaan mielekkäästi merkitä indeksoidulla merkinnällä $s_i \in \Omega$,
     missä $i \in \PlainSet{1, \dots, \abs{\Omega}}$.
     Tässä tutkielmassa ratkaisuavaruus on äärellinen.
-    Jos sekaannuksen varaa ei ole, tarvittaessa väärinkäytämme merkintöjä ja  kirjoitetamme lyhyesti $s_i = i$.
+    Jos sekaannuksen varaa ei ole, tarvittaessa samastamme kunkin tilan indeksinsä kanssa ja merkitsemme lyhyesti $s_i$:n sijasta $i$.
 \end{merk}
 
-Konveksin funktion minimin tai yleisesti paikallisen (lokaalin) minimin,
+Numeerisessa optimointiongelmassa funktion $E$ arvon laskeminen kussakin pisteessä voi olla laskennallisesti kallis operaatio ja hakuavaruus $\Omega$ suuri,
+joten kaikkien alkioiden $s_i$ iteroiminen on useimmiten liian hidasta.
+Konveksin funktion minimin tai yleisesti paikallisen minimin,
 \begin{equation}
     s_\text{lok. opt} = \min_s E(s), \quad \text{missä } \abs{s - s_{\text{lok. opt}}} < \delta \text{ jollain } \delta > 0,
 \end{equation}
 löytäminen on helppoa erilaisilla differentiaalilaskentaan pohjautuvilla menetelmillä
 (esimerksi kvasi-Newton-, konjugaattigradientti- tai jyrkimmän pudotuksen menetelmät).
-Sen sijaan ei-konveksien funktioiden optimointiongelmissa haasteena on välttää juuttuminen paikallisiin minimialueisiin,
+Sen sijaan ei-konveksien funktioiden optimoinnissa haasteena on välttää juuttuminen paikallisiin minimialueisiin,
 mihin tyypillinen vastaus on hyödyntää algoritmissa satunnaisuutta.
-Toisaalta haasteena on myös samalla hyödyntää ongelman rakennetta globaalin minimin löytämiseen paremmin kuin esimerkiksi yksinkertainen kattava satunnaishaku.
+Toisaalta haasteena on myös samalla hyödyntää ongelman rakennetta globaalin minimin löytämiseen paremmin kuin esimerkiksi yksinkertaisessa kattavassa satunnaishaussa.
 Erilaiset probabilistiset ja satunnaisuuteen perustuvat (meta-)heurestiikat (kuten geneettiset algoritmit tai tabu-haku, \cite[ks. esim.][]{glover03}) ja Monte Carlo -menetelmät (mm. \emph{importance sampling}) ovat osoittautuneet toimiviksi tämänkaltaisissa ongelmissa.
 Yksi tällaisista heurestiikoista on tässä tutkielmassa käsiteltävä jäähdytysalgoritmi.
 \cite{salamonetal}
@@ -56,9 +58,9 @@ Yksi tällaisista heurestiikoista on tässä tutkielmassa käsiteltävä jäähd
 
 Ennen jäähdytysalgoritmin tarkempaa kuvausta käydään läpi joitain perusteita Markovin ketjuista.~\footnote{Merkinnät \cite{laarhoven} tapaan.}
 
-Diskreetti Markovin ketju on stokastinen prosessi, jossa prosessin kukin tila riippuu vain edellisestä tilasta,
-toisin sanoen olettaen että ketjun tila nykyhetkellä tunnetaan, seuraava (tuleva) tila on ehdollisesti riippumaton menneistä tiloista.
-Tätä kutsutaan \emph{Markov-ominaisuudeksi} tai \emph{unohtuvaisuusominaisuudeksi}.
+Diskreetti Markovin ketju on stokastinen prosessi, jossa prosessin kukin tila riippuu vain edellisestä tilasta.
+Olettaen että ketjun tila nykyhetkellä tunnetaan, seuraava (tuleva) tila on ehdollisesti riippumaton menneistä tiloista.
+Tätä kutsutaan ketjun \emph{Markov-ominaisuudeksi} tai \emph{unohtuvaisuusominaisuudeksi}.
 
 \begin{maar}
     Stokastinen prosessi (satunnaisprosessi) on jono ajanhetkien $k \in \Natural$ mukaan järjestettyjä satunnaismuuttujia (satunnaisvektoreita) $\vect{X}(k)$ joltain todennäköisyysavaruudelta tilajoukkoon $\Omega$.
@@ -175,15 +177,13 @@ ja sitten tarkempi matemaattinen malli Markovin ketjuina (jakso~\ref{sub:algorit
 \subsection{Jäähdytysalgoritmin idea}
 \label{sub:jaahdytysalgoritmin_idea}
 
-Jäähdystysalgoritmin toiminta perustuu termodynaamiseen analogiaan kiinteiden metallikappaleiden jäähdyttämiseen tietynlaisessa metallurgian lämpökäsittelymenetelmässä (engl. nimitys \emph{annealing}).
-Menetelmässä metallikappale kuumennetaan niin korkeaan lämpötilaan, että aine muuttuu nestemäiseksi ja partikkelit alkavat liikkua vapaasti ja niiden keskinäinen järjestys on satunnainen.
+Jäähdystysalgoritmin toiminta perustuu termodynaamiseen analogiaan kiinteiden metallikappaleiden jäähdyttämiseen tietynlaisessa metallurgian lämpökäsittelymenetelmässä (menetelmän engl. nimitys \emph{annealing}).
+Menetelmässä metallikappale kuumennetaan niin korkeaan lämpötilaan, että aineen partikkelit alkavat liikkua vapaasti ja niiden keskinäinen järjestys on satunnainen.
 Tämän jälkeen kappaleen annetaan hitaasti jäähtyä, erityisen hitaasti jäätymispisteen lähellä.
 Näin jäähdytettävä aine kristalloituu matalaenergisimpään perustilaansa,
-ja partikkelit muodostavat säännöllisen, virheettömän rakenteen.
-~\cite{kirkpatrick83, laarhoven}
+ja partikkelit muodostavat säännöllisen, virheettömän rakenteen~\cite{kirkpatrick83, laarhoven}.
 Optimointiongelman kohdefunktion arvot samastetaan jäähdytettävän kappaleen muodostaman fysikaalisen systeemin energiatiloihin.
-Algoritmissa systeemin kuhunkin lämpötilaansa liittyvän tasapainotilan (engl. \emph{thermal equilibrium}) lähestymistä simuloidaan Metropolis--Hastings-algoritmilla.
-~\cite{kirkpatrick83, salamonetal}
+Algoritmissa systeemin kuhunkin lämpötilaansa liittyvän tasapainotilan (engl. \emph{thermal equilibrium}) lähestymistä simuloidaan Metropolis--Hastings-algoritmilla~\cite{kirkpatrick83, salamonetal}.
 
 \subsection{Algoritmin kuvaus: Metropolis-kriteeri}
 \label{sub:algoritmin_kuvaus_metropolis_kriteeri}
@@ -209,7 +209,7 @@ missä $\Delta E = \Delta E_{ji} = E(s_j) - E(s_i)$.
 Mikäli ehdokasta $s_j$ ei hyväksytä, pysytään entisessä tilassa $s_i$.
 
 Kun algoritmia on iteroitu tarpeeksi kauan (ja fysikaalisessa tulkinnassa simuloitava systeemi on saavuttanut sen hetkiseen lämpötilaan liittyvän termodynaamisen tasapainotilan), lämpötilaparametria $t$ lasketaan hieman, ja algoritmia jatketaan kunnes systeemi on ''jäähtynyt''.
-Algoritmi siis pysäytetään jollain tarpeeksi pienellä $t$:n arvolla kun voidaan jonkin kriteerin avulla todeta systeemin ''jäähtyneen'' matalaenergisimpään rakenteeseensa.
+Tällä tarkoitetaan että algoritmi pysäytetään tarpeeksi pienellä $t$:n arvolla, yleensä kun voidaan jonkin valitun kriteerin avulla todeta systeemin jäähtyneen matalaenergisimpään rakenteeseensa.
 
 Edellä kuvattu prosessi on analoginen aiemmassa alaluvussa~\ref{sub:jaahdytysalgoritmin_idea} kuvaillun lämpökäsittelyprosessin fysikaalisen mallin kanssa,
 mitä tutkitaan tarkemmin myöhemmin (alaluku~\ref{sec:algoritmin_teoreettinen_perustelu}).
@@ -293,11 +293,11 @@ ja lyhyt yhteenveto teoksessa \cite{laarhoven} esitetyistä laajemmista teoreett
 
 Tilastollisessa fysiikassa \emph{tilastollinen mekaniikka} tutkii tiiviin (kiinteän ja nestemäisen) aineen makroskooppista käyttäytymistä ja erityisesti termodynaamisia systeemeitä soveltamalla tilastollisia menetelmiä klassisen mekaanikan tai kvanttimekaniikan mukaisiin aineen mikroskooppisiin malleihin.
 Tilastollisessa mekaniikassa oletetaan että fyysisen systeemin makroskooppinen tila voidaan mallintaa todennäköisyysjakaumana sen mahdollisten mikroskooppisten tilojen (konfiguraatioiden) kokoelman yli.
-Aineen mikroskooppisella tilalla tarkoitetaan aineen kaikkien yksittäisen (tässä yhteydessä klassisen mekaniikan käsityksen mukaisten) hiukkasten tilaa.
+Aineen mikroskooppisella tilalla tarkoitetaan aineen kaikkien yksittäisen (tässä yhteydessä klassisen mekaniikan käsityksen mukaisten) hiukkasten tilaa.~\cite{salamonetal}
 
 Jäähdytysmenetelmän tarkastelun kannalta tilastollisen mekaniikan keskeinen tulos on,
 että mikroskooppisilla tiloilla on lämpötilassa $t$ tasapainojakauma (termodynaaminen tasapainotila),
-joka voidaan johtaa \cite[ks. esim.][luku 5]{salamonetal} ja monissa malleissa (kun kvantti-ilmiöitä ei huomioida) on Boltzmannin jakauma~\ref{eq:boltzmann_mekaniikka}.
+joka voidaan johtaa \cite[ks. esim.][luku 5]{salamonetal} ja monissa malleissa (kun kvantti-ilmiöitä ei huomioida) on Boltzmannin jakauma~\eqref{eq:boltzmann_mekaniikka}.
 Termodynaamisessa tasapainotilassa lämpötilassa $t$ systeemi on tilassa $s$ jonka sisäenergia on $E = E(s)$ todennäköisyydellä
 \begin{equation}
     \label{eq:boltzmann_mekaniikka}
@@ -331,13 +331,13 @@ missä $Q(t)$ on fysikaalista jakofunktiota vastaava normittava tekijä
 \end{equation}
 
 Mallinnettussa jäähdytyksessä fysikaalista prosessia simuloidaan Metropolis-algoritmilla,
-joka approksimoi yhtälön~\ref{eq:boltzmann_sa} muotoista Boltzmannin jakaumaa.
+joka approksimoi yhtälön~\eqref{eq:boltzmann_sa} muotoista Boltzmannin jakaumaa.
 
 Todellisuudessa monet kombinatoriset ongelmat joihin jäähdytysalgoritmia sovelletaan eivät kuitenkaan aina käyttäydy kuin tyypilliset termodynaamiset systeemit.
 Tällaisissa tilanteissa algoritmin käyttäytymistä usein verrataan lasin kaltaisiin systeemeihin (\emph{glassy systems}).
-Kyseisen kaltaisen aineen rakenne jää epäoptimaaliseen järjestykseen kun sen lämpötila laskee aineen nk. neste-lasi -transitiolämpötilan alapuolelle:
+Kyseisen kaltaisen aineen rakenne jää epäoptimaaliseen järjestykseen kun sen lämpötila laskee aineen nk. neste-lasi-transitiolämpötilan alapuolelle:
 sanotaan että systeemi käy läpi neste-lasitransition.
-\cite[][luku 6.6]{salamonetal}
+~\cite[][luku 6.6]{salamonetal}
 
 \subsection{Algoritmin tasapainojakauma ja Metropolis--Hastings-algoritmi}
 \label{sub:metropolis_hastings_algoritmi}
@@ -354,7 +354,7 @@ ja lauseen~\ref{lau:aperiodisuus} mukaan algoritmin ketjut ovat aperiodisia.
 Näin ollen on perusteltua olettaa että järkevästi toteutettu SA-algoritmi konvergoi kohti jotain tasapainojakaumaa.
 Edellisessä alaluvussa perusteltiin algoritmin kykyä löytää globaali optimi
 tilastolliseen fysiikkaan perustuvan intuition kautta,
-minkä kannalta oleellista on että mallinnettu jäähdytys approksimoi nimenomaisesti Boltzmannin jakaumaa~\ref{eq:boltzmann_sa}.
+minkä kannalta oleellista on että mallinnettu jäähdytys approksimoi nimenomaisesti Boltzmannin jakaumaa~\eqref{eq:boltzmann_sa}.
 
 Mallinnettu jäähdytys on erikoistapaus yleisestä Metropolis--Hastings-algo\-rit\-mista.
 Metropolis--Hastings on suosittu Markovin ketjujen Monte Carlo -menetelmä (engl. \emph{Markov Chain Monte Carlo}, lyhyesti MCMC)  jonkin halutun todennäköisyysjakauman $\vect{\pi}(x)$ approksimointiin,
@@ -383,7 +383,7 @@ Nähdään, että tasapainojakauman määritelmän~\ref{maar:stationaarinen} kol
 \end{equation}
 missä viimeinen askel pätee sillä luonnollisesti $\sum_j M_{j,i} = \sum_j \Pr\{ \vect{X}(k+1) = j \mid \vect{X}(k) = i \} = 1$ kaikilla $i$.
 
-Johdetaan nyt yleinen Metropolis-algoritmi etsimällä Markov-ketju joka toteuttaa kääntyvyysominaisuuden~\ref{eq:tasapainoehto},
+Johdetaan nyt yleinen Metropolis-algoritmi etsimällä Markov-ketju joka toteuttaa kääntyvyysominaisuuden~\eqref{eq:tasapainoehto},
 jolloin sillä on haluttu stationaarinen jakauma~$\vect{\pi}$.
 
 Kirjoitetaan $M_{i,j} = \Pr\{\vect{X}(k+1) = i \mid \vect{X}(k) = j\}$ generointi- ja hyväksymistodennäköisyyksien $G_{i,j}$ ja $A_{i,j}$ avulla
@@ -428,12 +428,12 @@ Hyväksymimistodennäköisyydelle $A_{i,j}$ on siis näin johdettu kaava kun $i\
     \label{eq:yleinen_metropolis}
     A_{i,j} = \min\left\{1, \frac{\vect{\pi}(i)}{\vect{\pi}(j)}\right\}.
 \end{equation}
-Algoritmin~\ref{eq:siirtymamatriisi_maar} johto on valmis, kun vielä asetamme tapauksessa $i=j$
+Algoritmin~\eqref{eq:siirtymamatriisi_maar} johto on valmis, kun vielä asetamme tapauksessa $i=j$
 \begin{equation}
     M_{i,j} = M_{i,i} =  1 - \sum_{l\not =j} G_{l,j}A_{l,j}.
 \end{equation}
 
-Kuten edellä (alaluku~\ref{sub:tilastollinen_mekaniikka}) perusteltiin, SA-algoritmissa approksimoitava jakauma \vect{\pi} on  kullakin $t$:n arvolla Boltzmannin jakauma~\ref{eq:boltzmann_sa}
+Kuten edellä (alaluku~\ref{sub:tilastollinen_mekaniikka}) perusteltiin, SA-algoritmissa approksimoitava jakauma \vect{\pi} on  kullakin $t$:n arvolla Boltzmannin jakauma~\eqref{eq:boltzmann_sa}
 \begin{equation}
     \vect{\pi} = \vect{\pi}_t(i) = \frac{1}{Q(t)} \exp \left(-\frac{E(s_i)}{t}\right).
 \end{equation}
@@ -441,12 +441,12 @@ Koska
 \begin{equation}
     \frac{\vect{\pi}(j)}{\vect{\pi}(i)} = \frac{\vect{\pi}_t(j)}{\vect{\pi}_t(i)} = \exp \left(\frac{E(s_i) - E(s_j)}{t}\right),
 \end{equation}
-yhtälö~\ref{eq:yleinen_metropolis} saa tällä jakaumalla muodon
+yhtälö~\eqref{eq:yleinen_metropolis} saa tällä jakaumalla muodon
 \begin{equation}
     \label{eq:boltzmann_metropolis}
     A_{j,i} = \min\left\{1, \frac{\vect{\pi}(j)}{\vect{\pi}(i)}\right\} = \min\left\{1, \exp \left(-\frac{\Delta E}{t}\right)\right\}, \quad \text{missä } \Delta E = \Delta E_{j,i} = E(s_j) - E(s_i),
 \end{equation}
-mikä on juuri haluttu Metropolis-kriteeri~\ref{eq:metropolis_kriteeri}.
+mikä on juuri haluttu Metropolis-kriteeri~\eqref{eq:metropolis_kriteeri}.
 
 Lauseen  \ref{lause:stat_jakauman_konvergenssi} mukaan Metropolis-algoritmi konvergoi kohti stationaarista jakaumaa $\vect{\pi}$ todennäköisyydellä 1 kun Markov-ketjujen pituudet kasvavat rajatta kullakin $t$.
 
@@ -471,6 +471,6 @@ missä 'riittävän hitaasti' tarkoittaa ehtoa muotoa
 \end{equation}
 Vakiolle $\Gamma$ tunnetaan erilaisia rajoja $\Gamma \geq d$,
 jossa $d$ on ongelman rakenteesta riippuva parametri~\cite[38]{laarhoven}.
-Mielenkiintoinen SA:n ominaisuus on että myös ehtoa~\ref{eq:jaahtymisehto} nopeammat jäähdytysstrategiat toimivat usein hyvin,
+Mielenkiintoinen SA:n ominaisuus on että myös ehtoa~\eqref{eq:jaahtymisehto} nopeammat jäähdytysstrategiat toimivat usein hyvin,
 vaikkei niille ole yhtä varmaa teoreettista perustelua.
 
