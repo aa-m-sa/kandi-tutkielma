@@ -12,14 +12,14 @@ Monen kiekon tapauksessa vastaavasti pyritään minimoimaan jokaista kuvan $A_{\
 
 Jos kuvien resoluution ajatellaan olevan tarpeeksi suuri,
 kiekko-ongelmaa olisi myös perusteltua mallintaa \emph{jatkuvan} optimoinnin tehtävänä eikä kombinatorisena optimointiongelmana,
-johon tässä tutkielmassa kuvattu ''klassinen'' SA soveltuu,
-Esimerkiksi \textcite{recipes07} ehdottavat jäähdytysmenetelmän jatkuvassa tapauksessa hieman hienostuneempaa menetelmää uuden tilan $s_j$ valitsemiseen.
+johon tässä tutkielmassa kuvattu ''klassinen'' SA soveltuu.
+Esimerkiksi \textcite{recipes07} ehdottavat jatkuvassa tapauksessa hieman hienostuneempaa menetelmää uuden tilan $s_j$ valitsemiseen.
 Käytännössä diskreetti algoritmi kuitenkin toimii kiekko-ongelmaan,
 ja joka tapauksessa teoreettisesti jatkuva parametriavaruus on diskreetti laskentatarkkuuden puitteissa.
 
 Muotoillaan $k$ kiekon ongelma äärelliselle $k \in \Natural$ (josta yhden kiekon ongelma saadaan erikoistapauksena $k=1$) optimointiongelmana,
 johon sovelletaan jäähdytysalgoritmia.
-Määritellään algoritmin tilat ja valitaan sopiva energiafunktio ja jäähdytysstrategia.
+Määritellään algoritmin tilat ja valitaan sopiva energiafunktio ja jäähdytysstrategia:
 
 \begin{maar}
     Yhden kiekon tapauksessa sanomme että kiekon $w_i$ määrittävät parametrit $x_i, y_i, r_i$ muodostavat yhdessä jäähdytysalgoritmin tilan (tai ratkaisuehdokkaan tai konfiguraation) $s_i$,
@@ -205,7 +205,7 @@ Käytännön esimerkki kuvassa~\ref{fig:localmins}.
 
 Yksinkertaisin tapa toteuttaa jäähdytysalgoritmin 'pieni satunnainen siirtymä' olisi satunnaisesti valita jokin muuttujista $x, y, r$ ja lisätä tai vähentää siitä jokin kiinteä, pieni luku $\delta > 0$.
 Käytännössä näin saataisiin jatkuvan parametriavaruuden $\Omega$ diskretisointi.
-Tällöin kuitenkin joko menetettäisiin ratkaisutarkkuutta (jos $\delta$ on suuri) tai pienellä vakion arvolla $\delta \approx \text{pikseli}$ siirtymät olisivat liian pieniä jotta lagoritmi kävisi ratkaisuavaruutta läpi tehokkaasti.
+Tällöin kuitenkin joko menetettäisiin ratkaisutarkkuutta (jos $\delta$ on suuri) tai pienellä vakion arvolla $\delta \approx \text{pikseli}$ siirtymät olisivat liian pieniä jotta algoritmi kävisi ratkaisuavaruutta läpi tehokkaasti.
 
 Tämän vuoksi käytetään seuraavaa menetelmää siirtymien generointiin:
 Valitaan satunnainen kiekko, jonka parametrit ovat $(x, y, r)$.
