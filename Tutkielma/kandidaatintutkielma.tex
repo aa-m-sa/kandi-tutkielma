@@ -3,6 +3,7 @@
 \usepackage{kandi}
 
 \usepackage{metalogo}
+\usepackage{pdfpages}
 
 % useful definitions
 
@@ -37,6 +38,8 @@
 
     \date{\today}
 
+    \pagenumbering{roman}
+
     %\maketitle
     \input{./title}
 
@@ -56,6 +59,14 @@
         \noindent
         Tämä teos on lisensoitu \href{http://creativecommons.org/licenses/by-sa/4.0/}{Creative Commons Nimeä-JaaSamoin 4.0 Kansainvälinen} -lisenssillä.
     \end{center}
+
+    \newpage
+    \includepdf{kandiabs-final-2016-03-15.pdf}
+    \newpage
+    \thispagestyle{empty}
+    \null
+    \newpage
+    \pagenumbering{arabic}
 
     % sisallys
     {\small

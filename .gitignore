@@ -3,7 +3,7 @@
 *.aux
 *.toc
 *.out
-Tutkielma/*.pdf
+Tutkielma/kandidaatintutkielma.pdf
 *.swp
 revision.tex
 *.bbl
