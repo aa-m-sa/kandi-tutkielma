@@ -12,8 +12,8 @@ So I copied the tex parts into this *brand new cool repo* for publishing it here
 
 ## I found an error in the text!
 
-Shame on me. Please report firstname.surname@helsinki.fi or use the issue mechanism if you feel adventurous :-)
+Shame on me. Please report firstname.surname@helsinki.fi [or use the issue mechanism if you feel adventurous] :-)
 
 ## License
 
-Creative Commons v.4.0 International BY-SA-NC
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />This work by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Aaro Salosensaari</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
