@@ -2,6 +2,8 @@
 
 \usepackage{kandi}
 
+\usepackage{metalogo}
+
 % useful definitions
 
 \newcommand{\Author}{Aaro Salosensaari}
@@ -16,6 +18,7 @@
     pdfauthor={\Author}
 }
 
+
 \usepackage{csquotes}
 \usepackage[hyperref=true, style=alphabetic]{biblatex}
 \bibliography{bibkandi}
@@ -25,6 +28,7 @@
 
 \begin{document}
 
+
     \title{\Title}
 
     \author{\Author\\
@@ -33,13 +37,30 @@
 
     \date{\today}
 
-
     %\maketitle
     \input{./title}
+
+    \newpage
+
+    % julkaisutiedot tähän
+    \thispagestyle{empty}
+    \null
+    \vfill
+    \begin{center}
+        Ladottu \LuaLaTeX-ohjelmistolla.\\\vspace{2em}
+        \includegraphics[width=0.2\linewidth]{figures/by-sa.pdf}
+
+        \noindent
+        This work is licensed under a \href{http://creativecommons.org/licenses/by-sa/4.0/}{Creative Commons Attribution-ShareAlike 4.0 International License}.
+
+        \noindent
+        Tämä teos on lisensoitu \href{http://creativecommons.org/licenses/by-sa/4.0/}{Creative Commons Nimeä-JaaSamoin 4.0 Kansainvälinen} -lisenssillä.
+    \end{center}
 
     % sisallys
     {\small
         \tableofcontents
+        \setcounter{page}{1}
     }
 
     \include{./content/johdanto}
