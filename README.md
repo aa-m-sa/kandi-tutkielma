@@ -5,7 +5,7 @@ Topic of the thesis was "Simulated annealing and detecting circles in images".
 
 Link to code (TBA).
 
-[Link to the pdf](https://github.com/aa-m-sa/kandi-tutkielma/releases/download/internet-cc-by-sa-versio/kandidaatintutkielma-internet-2016-03-17.pdf).
+[Link to the pdf](https://aqsalose.kapsi.fi/stuff/kandidaatintutkielma-internet-recent.pdf).
 
 ## Why there's so few commits...?
 
