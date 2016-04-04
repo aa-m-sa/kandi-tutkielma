@@ -1,7 +1,7 @@
 # kandi-tutkielma
 
 This repo contains the written part of my B.Sc. thesis (in Finnish).
-Topic of the thesis was "Simulated annealing and detecting circles in images".
+Topic of the thesis was "Simulated annealing and detecting circles in images" (Mallinnettu jäähdytys ja ympyräkiekkojen etsiminen kuvasta).
 
 Link to code (TBA).
 
